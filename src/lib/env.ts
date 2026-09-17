@@ -14,10 +14,21 @@ function required(name: string) {
 }
 
 export function getAppUrl() {
-  return (process.env.APP_URL || process.env.BETTER_AUTH_URL || "http://localhost:3000").replace(
-    /\/$/,
-    "",
-  );
+  const fromEnv = process.env.APP_URL || process.env.BETTER_AUTH_URL;
+  if (fromEnv) return fromEnv.replace(/\/$/, "");
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
+  return "http://localhost:3000";
+}
+
+export function getTrustedOrigins() {
+  const origins = new Set<string>([getAppUrl()]);
+  if (process.env.VERCEL_URL) {
+    origins.add(`https://${process.env.VERCEL_URL}`);
+  }
+  if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
+    origins.add(`https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`);
+  }
+  return [...origins];
 }
 
 export function getLocationPrefix() {

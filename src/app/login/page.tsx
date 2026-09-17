@@ -6,6 +6,8 @@ export const metadata: Metadata = {
   title: "Staff sign in",
 };
 
+export const dynamic = "force-dynamic";
+
 export default async function LoginPage({ searchParams }: PageProps<"/login">) {
   const params = await searchParams;
   const nextPath = typeof params.next === "string" ? params.next : "/packages";

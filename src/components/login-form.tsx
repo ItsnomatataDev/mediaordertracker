@@ -1,15 +1,56 @@
 "use client";
 
-import { useActionState } from "react";
-import { loginAction, type LoginState } from "@/app/actions/auth";
-
-const initial: LoginState = {};
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export function LoginForm({ nextPath }: { nextPath: string }) {
-  const [state, action, pending] = useActionState(loginAction, initial);
+  const router = useRouter();
+  const [error, setError] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
+
+  async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setPending(true);
+    setError(null);
+
+    const form = new FormData(event.currentTarget);
+    const email = String(form.get("email") || "");
+    const password = String(form.get("password") || "");
+
+    try {
+      const response = await fetch("/api/auth/sign-in/email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ email, password }),
+      });
+      const data = (await response.json().catch(() => null)) as {
+        message?: string;
+        user?: { mustChangePassword?: boolean };
+      } | null;
+
+      if (!response.ok) {
+        setError(data?.message || "Invalid email or password");
+        return;
+      }
+
+      const destination =
+        data?.user?.mustChangePassword
+          ? "/account?required=1"
+          : nextPath.startsWith("/")
+            ? nextPath
+            : "/packages";
+      router.push(destination);
+      router.refresh();
+    } catch {
+      setError("Could not sign in. Try again.");
+    } finally {
+      setPending(false);
+    }
+  }
 
   return (
-    <form action={action} className="space-y-4">
+    <form onSubmit={onSubmit} className="space-y-4">
       <input type="hidden" name="next" value={nextPath} />
       <label className="block">
         <span className="mb-1.5 block text-sm font-medium">Work email</span>
@@ -32,7 +73,7 @@ export function LoginForm({ nextPath }: { nextPath: string }) {
           className="field"
         />
       </label>
-      {state.error ? <p className="notice notice-error">{state.error}</p> : null}
+      {error ? <p className="notice notice-error">{error}</p> : null}
       <button type="submit" disabled={pending} className="btn btn-black w-full">
         {pending ? "Signing in…" : "Sign in"}
       </button>
