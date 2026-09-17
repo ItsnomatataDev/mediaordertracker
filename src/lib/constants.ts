@@ -1,15 +1,7 @@
-export const PRODUCTS = [
-  "Flight of Angels",
-  "Spectacular",
-  "Explore",
-] as const;
-
-export type ProductName = (typeof PRODUCTS)[number];
-
 export const LOCATIONS = [
   { code: "ZHC", label: "Zambezi Helipad" },
   { code: "JETBOAT", label: "Jetboat" },
-  { code: "EleCre", label: "EleCre" },
+  { code: "EleCrew", label: "EleCrew" },
 ] as const;
 
 export type LocationCode = (typeof LOCATIONS)[number]["code"];
@@ -20,6 +12,7 @@ export const LOCATION_CODES = LOCATIONS.map((location) => location.code) as [
 ];
 
 export function locationLabel(code: string) {
+  if (code === "EleCre") return "EleCrew";
   return LOCATIONS.find((location) => location.code === code)?.label || code;
 }
 

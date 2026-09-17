@@ -113,7 +113,6 @@ model Job {
   guestEmail         String?
   guestPhone         String?
   detailsConfirmedAt DateTime?
-  product            String
   location           String      @default("ZHC")
   status             JobStatus   @default(NEW)
   weTransferUrl      String?

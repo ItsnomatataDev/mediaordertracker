@@ -35,7 +35,7 @@ export default async function PackageDetailPage({ params }: PageProps<"/packages
             ) : null}
           </div>
           <p className="mt-2 text-muted">
-            {locationLabel(job.location)} · {job.product} · {formatAge(job.createdAt)} · created by{" "}
+            {locationLabel(job.location)} · {formatAge(job.createdAt)} · created by{" "}
             {job.createdBy.name}
           </p>
         </div>

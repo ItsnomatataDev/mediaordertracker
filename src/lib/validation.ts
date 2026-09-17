@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { LOCATION_CODES, PRODUCTS } from "@/lib/constants";
+import { LOCATION_CODES } from "@/lib/constants";
 
 export const passwordSchema = z
   .string()
@@ -18,7 +18,6 @@ export const createJobSchema = z
     guestName: z.string().trim().min(2, "Name is required").max(80),
     guestEmail: z.union([z.email("Enter a valid email"), z.literal("")]),
     guestPhone: z.string().trim().max(24),
-    product: z.enum(PRODUCTS),
     location: z.enum(LOCATION_CODES),
   })
   .refine((value) => value.guestEmail || value.guestPhone.trim().length >= 7, {

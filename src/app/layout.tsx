@@ -13,10 +13,14 @@ export const metadata: Metadata = {
     default: "IT's No Matata · Media Portal",
     template: "%s · IT's No Matata",
   },
-  description: "Media package collection for ZHC, JETBOAT and EleCre.",
+  description: "Media package collection for ZHC, JETBOAT and EleCrew.",
   robots: { index: false, follow: false },
   icons: {
-    icon: "/logo.png",
+    icon: [
+      { url: "/logo.png", type: "image/png", sizes: "512x512" },
+      { url: "/favicon.ico", type: "image/x-icon" },
+    ],
+    shortcut: "/logo.png",
     apple: "/logo.png",
   },
 };

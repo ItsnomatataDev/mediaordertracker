@@ -54,7 +54,7 @@ export function getSupportWhatsApp() {
 }
 
 export function getSupportEmail() {
-  return process.env.SUPPORT_EMAIL || "";
+  return (process.env.SUPPORT_EMAIL || "media@itsnomatata.com").trim();
 }
 
 export function useSecureAuthCookies() {

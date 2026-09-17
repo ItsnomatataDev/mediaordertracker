@@ -1,6 +1,6 @@
 import { JobEventType, JobStatus, Prisma } from "@prisma/client";
 import { customAlphabet } from "nanoid";
-import { LOCATION_CODES, PRODUCTS, type LocationCode } from "@/lib/constants";
+import { LOCATION_CODES, type LocationCode } from "@/lib/constants";
 import {
   type AccessSource,
   type DeviceInfo,
@@ -44,13 +44,9 @@ export async function createJob(input: {
   guestName: string;
   guestEmail?: string;
   guestPhone?: string;
-  product: string;
   location: LocationCode;
   createdById: string;
 }) {
-  if (!PRODUCTS.includes(input.product as (typeof PRODUCTS)[number])) {
-    throw new Error("Unknown product");
-  }
   if (!LOCATION_CODES.includes(input.location)) {
     throw new Error("Unknown location");
   }
@@ -76,7 +72,6 @@ export async function createJob(input: {
         guestName: input.guestName,
         guestEmail: input.guestEmail || null,
         guestPhone: input.guestPhone || null,
-        product: input.product,
         location: locationPrefix,
         createdById: input.createdById,
       },

@@ -17,7 +17,7 @@ export default async function PackagesPage({ searchParams }: PageProps<"/package
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-sm text-muted">
-            {location ? locationLabel(location) : "ZHC · JETBOAT · EleCre"}
+            {location ? locationLabel(location) : "ZHC · JETBOAT · EleCrew"}
           </p>
           <h1 className="text-2xl font-semibold">Packages</h1>
           <p className="mt-1 text-sm text-muted">Media packages to deliver to clients.</p>
@@ -50,7 +50,6 @@ export default async function PackagesPage({ searchParams }: PageProps<"/package
               <th className="px-4 py-3">Package</th>
               <th className="px-4 py-3">Location</th>
               <th className="px-4 py-3">Guest</th>
-              <th className="px-4 py-3">Product</th>
               <th className="px-4 py-3">Status</th>
               <th className="px-4 py-3">Age</th>
               <th className="px-4 py-3">Scans / clicks</th>
@@ -66,9 +65,8 @@ export default async function PackagesPage({ searchParams }: PageProps<"/package
                   className={`border-t border-line ${overdue ? "bg-orange-soft" : ""}`}
                 >
                   <td className="px-4 py-3 font-mono text-xs">{job.reference}</td>
-                  <td className="px-4 py-3">{job.location}</td>
+                  <td className="px-4 py-3">{locationLabel(job.location)}</td>
                   <td className="px-4 py-3">{job.guestName}</td>
-                  <td className="px-4 py-3">{job.product}</td>
                   <td className="px-4 py-3">
                     <StatusBadge status={job.status} />
                   </td>
@@ -96,7 +94,7 @@ export default async function PackagesPage({ searchParams }: PageProps<"/package
               </div>
               <p className="mt-1 font-medium">{job.guestName}</p>
               <p className="text-sm text-muted">
-                {job.location} · {job.product} · {formatAge(job.createdAt)} · QR {job.qrScanCount} ·
+                {locationLabel(job.location)} · {formatAge(job.createdAt)} · QR {job.qrScanCount} ·
                 Portal {job.portalClickCount}
               </p>
             </Link>

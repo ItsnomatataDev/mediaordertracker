@@ -39,7 +39,6 @@ export async function createJobAction(
     guestName: String(formData.get("guestName") || ""),
     guestEmail: String(formData.get("guestEmail") || "").trim(),
     guestPhone: String(formData.get("guestPhone") || "").trim(),
-    product: String(formData.get("product") || ""),
     location: String(formData.get("location") || ""),
   });
 

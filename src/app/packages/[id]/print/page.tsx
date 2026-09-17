@@ -34,7 +34,6 @@ export default async function PrintReceiptPage({
       <MediaReceipt
         qr={qr}
         reference={job.reference}
-        product={job.product}
         guestName={job.guestName}
         location={job.location}
         url={url}

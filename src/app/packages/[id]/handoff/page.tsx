@@ -21,7 +21,6 @@ export default async function HandoffPage({ params }: PageProps<"/packages/[id]/
         qr={qr}
         reference={job.reference}
         guestName={job.guestName}
-        product={job.product}
         location={job.location}
         url={url}
       />
