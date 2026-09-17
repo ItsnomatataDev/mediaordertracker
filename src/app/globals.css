@@ -1,26 +1,122 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --black: #0a0a0a;
+  --orange: #e95a24;
+  --orange-hover: #c74c1e;
+  --orange-soft: #fdf2ed;
+  --white: #ffffff;
+  --muted: #5c5c5c;
+  --line: #e5e5e5;
+  --surface: #fafafa;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-black: var(--black);
+  --color-orange: var(--orange);
+  --color-orange-hover: var(--orange-hover);
+  --color-orange-soft: var(--orange-soft);
+  --color-white: var(--white);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-surface: var(--surface);
+  --font-sans: var(--font-poppins);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  min-height: 100%;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  background: var(--white);
+  color: var(--black);
+  font-family: var(--font-sans), sans-serif;
+}
+
+input,
+select,
+textarea,
+button {
+  font: inherit;
+  border-radius: 4px;
+}
+
+::selection {
+  background: #e95a2433;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 4px;
+}
+
+.field {
+  width: 100%;
+  border: 1px solid var(--line);
+  background: var(--white);
+  color: var(--black);
+  padding: 10px 12px;
+  border-radius: 4px;
+  outline: none;
+}
+
+.field:focus {
+  border-color: var(--black);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: var(--orange);
+  color: var(--white);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--orange-hover);
+}
+
+.btn-black {
+  background: var(--black);
+  color: var(--white);
+}
+
+.btn-ghost {
+  background: var(--white);
+  color: var(--black);
+  border-color: var(--line);
+}
+
+.notice {
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 10px 12px;
+  font-size: 14px;
+}
+
+.notice-error {
+  border-color: var(--orange);
+  color: var(--black);
+  background: var(--orange-soft);
 }

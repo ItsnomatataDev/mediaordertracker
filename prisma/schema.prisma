@@ -1,0 +1,148 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id
+  name          String
+  email         String
+  emailVerified Boolean
+  image         String?
+  createdAt     DateTime
+  updatedAt     DateTime
+  role          String    @default("user")
+  banned        Boolean?  @default(false)
+  banReason     String?
+  banExpires    DateTime?
+  sessions      Session[]
+  accounts      Account[]
+  jobs          Job[]
+  events        JobEvent[]
+
+  @@unique([email])
+  @@map("user")
+}
+
+model Session {
+  id             String   @id
+  expiresAt      DateTime
+  token          String
+  createdAt      DateTime
+  updatedAt      DateTime
+  ipAddress      String?
+  userAgent      String?
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  impersonatedBy String?
+
+  @@unique([token])
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime
+  updatedAt             DateTime
+
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String    @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime?
+  updatedAt  DateTime?
+
+  @@index([identifier])
+  @@map("verification")
+}
+
+enum JobStatus {
+  NEW
+  EDITING
+  UPLOADING
+  READY
+}
+
+enum JobEventType {
+  CREATED
+  PAGE_OPENED
+  DETAILS_UPDATED
+  DETAILS_CONFIRMED
+  STATUS_CHANGED
+  LINK_ADDED
+  MARKED_READY
+  EMAIL_SENT
+  DOWNLOAD_CLICKED
+}
+
+model DailySequence {
+  locationPrefix String
+  dateKey        String
+  nextInt        Int
+
+  @@id([locationPrefix, dateKey])
+}
+
+model Job {
+  id                 String      @id @default(cuid())
+  reference          String      @unique
+  publicToken        String      @unique
+  guestName          String
+  guestEmail         String?
+  guestPhone         String?
+  detailsConfirmedAt DateTime?
+  product            String
+  status             JobStatus   @default(NEW)
+  weTransferUrl      String?
+  createdById        String
+  createdBy          User        @relation(fields: [createdById], references: [id])
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+  readyAt            DateTime?
+  lastViewedAt       DateTime?
+  viewCount          Int         @default(0)
+  downloadClickCount Int         @default(0)
+  notifiedAt         DateTime?
+  events             JobEvent[]
+
+  @@index([status])
+  @@index([createdAt])
+  @@index([guestEmail])
+  @@index([guestPhone])
+  @@index([guestName])
+}
+
+model JobEvent {
+  id          String       @id @default(cuid())
+  jobId       String
+  job         Job          @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  type        JobEventType
+  message     String
+  actorUserId String?
+  actor       User?        @relation(fields: [actorUserId], references: [id])
+  metadata    Json?
+  createdAt   DateTime     @default(now())
+
+  @@index([jobId, createdAt])
+}
