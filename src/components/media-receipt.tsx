@@ -30,7 +30,7 @@ export function MediaReceipt({
           {location} · {product}
         </p>
         <div className="mx-auto mt-5 w-fit border border-black p-2">
-          <img src={qr} alt={`QR for media package ${reference}`} width={280} height={280} className="h-[280px] w-[280px]" />
+          <img src={qr} alt={`QR for media package ${reference}`} width={280} height={280} className="h-70 w-70" />
         </div>
         <p className="mt-4 font-mono text-lg font-semibold">{reference}</p>
         <p className="mt-3 text-sm leading-relaxed">

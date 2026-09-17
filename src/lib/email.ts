@@ -1,36 +1,9 @@
-import nodemailer from "nodemailer";
-import type SMTPTransport from "nodemailer/lib/smtp-transport";
-import { getAppUrl, getPublicAppUrl, getSupportEmail, smtpConfig, smtpErrorMessage } from "@/lib/env";
+import { Resend } from "resend";
+import { getAppUrl, getPublicAppUrl, getSupportEmail, mailConfig, mailErrorMessage } from "@/lib/env";
 import { jobPublicPath } from "@/lib/format";
 
 export function canSendEmail() {
-  return smtpConfig() !== null;
-}
-
-function transporter() {
-  const smtp = smtpConfig();
-  if (!smtp) {
-    throw new Error("Email is not configured. Add SMTP_HOST, SMTP_USER and SMTP_PASS.");
-  }
-
-  const options: SMTPTransport.Options = {
-    host: smtp.host,
-    port: smtp.port,
-    secure: smtp.port === 465,
-    auth: {
-      user: smtp.user,
-      pass: smtp.pass,
-    },
-    tls: {
-      minVersion: "TLSv1.2",
-    },
-  };
-
-  if (smtp.port === 587) {
-    options.requireTLS = true;
-  }
-
-  return nodemailer.createTransport(options);
+  return mailConfig() !== null;
 }
 
 function logoUrl(origin?: string) {
@@ -99,23 +72,22 @@ async function send(input: {
   text: string;
   html: string;
 }) {
-  const smtp = smtpConfig();
-  if (!smtp) {
-    throw new Error("Email is not configured. Add SMTP_HOST, SMTP_USER and SMTP_PASS.");
+  const mail = mailConfig();
+  if (!mail) {
+    throw new Error("Email is not configured. Add RESEND_API_KEY.");
   }
 
-  const mailer = transporter();
-  try {
-    await mailer.sendMail({
-      from: smtp.from,
-      replyTo: getSupportEmail() || smtp.user,
-      to: input.to,
-      subject: input.subject,
-      text: input.text,
-      html: input.html,
-    });
-  } catch (error) {
-    throw new Error(smtpErrorMessage(error));
+  const { error } = await new Resend(mail.apiKey).emails.send({
+    from: mail.from,
+    to: input.to,
+    replyTo: getSupportEmail() || undefined,
+    subject: input.subject,
+    text: input.text,
+    html: input.html,
+  });
+
+  if (error) {
+    throw new Error(mailErrorMessage(error.message || error));
   }
 }
 

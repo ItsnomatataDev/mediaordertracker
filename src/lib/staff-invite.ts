@@ -1,7 +1,7 @@
 import { APIError } from "better-auth/api";
 import { auth } from "@/lib/auth";
 import { canSendEmail, sendStaffInviteEmail } from "@/lib/email";
-import { getPublicAppUrl, getSmtpStatus, smtpErrorMessage } from "@/lib/env";
+import { getPublicAppUrl, getMailStatus, mailErrorMessage } from "@/lib/env";
 import { generateInvitePassword } from "@/lib/password";
 import { prisma } from "@/lib/prisma";
 import { createStaffSchema } from "@/lib/validation";
@@ -97,7 +97,7 @@ export async function inviteStaff(input: {
       emailed = true;
     } catch (error) {
       console.error("Staff invite email failed", error);
-      mailError = smtpErrorMessage(error);
+      mailError = mailErrorMessage(error);
     }
   }
 
@@ -112,11 +112,11 @@ export async function inviteStaff(input: {
     };
   }
 
-  const smtp = getSmtpStatus();
+  const mail = getMailStatus();
   return {
     success: resent
-      ? `Password reset for ${email}. ${mailError || smtp.message}`
-      : `Account created for ${email}. ${mailError || smtp.message}`,
+      ? `Password reset for ${email}. ${mailError || mail.message}`
+      : `Account created for ${email}. ${mailError || mail.message}`,
     emailed: false,
     resent,
     temporaryPassword: password,

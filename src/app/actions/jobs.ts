@@ -120,7 +120,7 @@ export async function markReadyAction(
   if (job.guestEmail && !canSendEmail()) {
     return {
       warning:
-        "Package is ready. SMTP is not configured yet, so no email was sent. Use WhatsApp or add SMTP settings.",
+        "Package is ready. Resend is not configured yet, so no email was sent. Use WhatsApp or add RESEND_API_KEY.",
     };
   }
 
@@ -138,7 +138,7 @@ export async function notifyGuestAction(
   if (job.status !== "READY") return { error: "Mark the package ready first" };
   if (!job.guestEmail) return { error: "Guest has no email on this package" };
   if (!canSendEmail()) {
-    return { error: "SMTP is not configured. Share the page link on WhatsApp instead." };
+    return { error: "Resend is not configured. Share the page link on WhatsApp instead." };
   }
 
   try {
