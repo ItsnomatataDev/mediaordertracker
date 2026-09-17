@@ -13,8 +13,6 @@ function required(name: string) {
   return value;
 }
 
-const INTERNAL_HOST = /^(localhost|127\.0\.0\.1|0\.0\.0\.0|app)(:\d+)?$/i;
-
 function trimSlash(value: string) {
   return value.replace(/\/$/, "");
 }
@@ -23,20 +21,10 @@ export function getAppUrl() {
   const fromEnv = process.env.APP_URL || process.env.BETTER_AUTH_URL;
   if (fromEnv) return trimSlash(fromEnv);
   if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
-  return "http://localhost:3000";
+  return "https://media.itsnomatata.com";
 }
 
-export function getPublicAppUrl(headerList?: Headers | null) {
-  if (headerList) {
-    const host = (headerList.get("x-forwarded-host") || headerList.get("host") || "")
-      .split(",")[0]
-      .trim();
-    const proto = (headerList.get("x-forwarded-proto") || "").split(",")[0].trim();
-    if (host && !INTERNAL_HOST.test(host)) {
-      const scheme = proto === "https" || proto === "http" ? proto : "http";
-      return trimSlash(`${scheme}://${host}`);
-    }
-  }
+export function getPublicAppUrl(_headerList?: Headers | null) {
   return getAppUrl();
 }
 
@@ -46,6 +34,8 @@ export function getTrustedOrigins() {
     const value = trimSlash(extra.trim());
     if (value) origins.add(value);
   }
+  origins.add("http://localhost:3000");
+  origins.add("http://127.0.0.1:3000");
   if (process.env.VERCEL_URL) {
     origins.add(`https://${process.env.VERCEL_URL}`);
   }

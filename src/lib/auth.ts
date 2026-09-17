@@ -51,7 +51,8 @@ export const auth = betterAuth({
   },
   advanced: {
     cookiePrefix: "matata",
-    useSecureCookies: getAppUrl().startsWith("https://"),
+    useSecureCookies:
+      process.env.NODE_ENV === "production" && getAppUrl().startsWith("https://"),
     ipAddress: {
       ipAddressHeaders: ["x-forwarded-for", "x-real-ip"],
     },
