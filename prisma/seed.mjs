@@ -10,14 +10,6 @@ const scryptConfig = {
   dkLen: 64,
 };
 
-function required(name) {
-  const value = process.env[name];
-  if (!value) {
-    throw new Error(`Missing ${name}`);
-  }
-  return value;
-}
-
 function hashPassword(password) {
   const salt = randomBytes(16).toString("hex");
   return new Promise((resolve, reject) => {
@@ -40,9 +32,14 @@ function hashPassword(password) {
 }
 
 async function main() {
-  const email = required("BOOTSTRAP_ADMIN_EMAIL").toLowerCase().trim();
-  const password = required("BOOTSTRAP_ADMIN_PASSWORD");
+  const email = process.env.BOOTSTRAP_ADMIN_EMAIL?.toLowerCase().trim();
+  const password = process.env.BOOTSTRAP_ADMIN_PASSWORD;
   const name = process.env.BOOTSTRAP_ADMIN_NAME || "Thando";
+
+  if (!email || !password) {
+    console.warn("Skipping admin seed: set BOOTSTRAP_ADMIN_EMAIL and BOOTSTRAP_ADMIN_PASSWORD");
+    return;
+  }
 
   if (password.length < 12) {
     throw new Error("BOOTSTRAP_ADMIN_PASSWORD must be at least 12 characters");
