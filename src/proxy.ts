@@ -4,12 +4,22 @@ import { getSessionCookie } from "better-auth/cookies";
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  if (pathname === "/jobs" || pathname.startsWith("/jobs/")) {
+    const nextPath = pathname.replace(/^\/jobs/, "/packages") || "/packages";
+    const url = new URL(nextPath, request.url);
+    url.search = request.nextUrl.search;
+    return NextResponse.redirect(url);
+  }
+
   const sessionCookie = getSessionCookie(request, {
     cookiePrefix: "matata",
   });
 
   const isStaffRoute =
-    pathname.startsWith("/jobs") || pathname.startsWith("/staff");
+    pathname.startsWith("/packages") ||
+    pathname.startsWith("/staff") ||
+    pathname.startsWith("/account");
 
   if (isStaffRoute && !sessionCookie) {
     const login = new URL("/login", request.url);
@@ -18,12 +28,22 @@ export function proxy(request: NextRequest) {
   }
 
   if (pathname === "/login" && sessionCookie) {
-    return NextResponse.redirect(new URL("/jobs", request.url));
+    return NextResponse.redirect(new URL("/packages", request.url));
   }
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/jobs/:path*", "/staff/:path*", "/login"],
+  matcher: [
+    "/jobs",
+    "/jobs/:path*",
+    "/packages",
+    "/packages/:path*",
+    "/staff",
+    "/staff/:path*",
+    "/account",
+    "/account/:path*",
+    "/login",
+  ],
 };

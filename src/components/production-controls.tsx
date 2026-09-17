@@ -78,7 +78,7 @@ export function ProductionControls({
               </button>
             </form>
           ) : (
-            <p className="text-sm text-muted">No email on this job.</p>
+            <p className="text-sm text-muted">No email on this package.</p>
           )}
           {notifyState.error ? <p className="notice notice-error">{notifyState.error}</p> : null}
           {notifyState.success ? <p className="notice">{notifyState.success}</p> : null}

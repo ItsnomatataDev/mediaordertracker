@@ -1,0 +1,6 @@
+-- AlterTable
+ALTER TABLE "Job" ADD COLUMN "qrScanCount" INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE "Job" ADD COLUMN "portalClickCount" INTEGER NOT NULL DEFAULT 0;
+
+-- AlterTable
+ALTER TABLE "user" ADD COLUMN "mustChangePassword" BOOLEAN NOT NULL DEFAULT false;

@@ -29,10 +29,9 @@ COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
-COPY --from=builder /app/node_modules/better-auth ./node_modules/better-auth
-COPY --from=builder /app/node_modules/@better-auth ./node_modules/@better-auth
 COPY --from=builder /app/package.json ./package.json
 COPY docker-entrypoint.sh /app/docker-entrypoint.sh
+COPY prisma/seed.mjs /app/prisma/seed.mjs
 
 RUN chmod +x /app/docker-entrypoint.sh && chown -R nextjs:nodejs /app/prisma /app/docker-entrypoint.sh
 

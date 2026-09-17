@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 
 export default async function LoginPage({ searchParams }: PageProps<"/login">) {
   const params = await searchParams;
-  const nextPath = typeof params.next === "string" ? params.next : "/jobs";
+  const nextPath = typeof params.next === "string" ? params.next : "/packages";
   const banned = params.error === "banned";
 
   return (
@@ -26,7 +26,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
             <p className="notice notice-error mt-4">This account has been disabled.</p>
           ) : null}
           <div className="mt-6">
-            <LoginForm nextPath={nextPath.startsWith("/") ? nextPath : "/jobs"} />
+            <LoginForm nextPath={nextPath.startsWith("/") ? nextPath : "/packages"} />
           </div>
         </div>
       </div>

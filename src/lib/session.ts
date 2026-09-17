@@ -9,7 +9,11 @@ export const getSession = cache(async () => {
   });
 });
 
-export async function requireStaff() {
+function mustChangePassword(session: Awaited<ReturnType<typeof getSession>>) {
+  return Boolean((session?.user as { mustChangePassword?: boolean } | undefined)?.mustChangePassword);
+}
+
+export async function requireStaff(options?: { allowPasswordChange?: boolean }) {
   const session = await getSession();
   if (!session?.user) {
     redirect("/login");
@@ -17,13 +21,16 @@ export async function requireStaff() {
   if (session.user.banned) {
     redirect("/login?error=banned");
   }
+  if (!options?.allowPasswordChange && mustChangePassword(session)) {
+    redirect("/account?required=1");
+  }
   return session;
 }
 
 export async function requireAdmin() {
   const session = await requireStaff();
   if (session.user.role !== "admin") {
-    redirect("/jobs");
+    redirect("/packages");
   }
   return session;
 }

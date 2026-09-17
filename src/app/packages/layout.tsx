@@ -1,7 +1,7 @@
 import { StaffHeader } from "@/components/staff-header";
 import { requireStaff } from "@/lib/session";
 
-export default async function StaffLayout({ children }: LayoutProps<"/jobs">) {
+export default async function PackagesLayout({ children }: LayoutProps<"/packages">) {
   const session = await requireStaff();
 
   return (
@@ -11,7 +11,9 @@ export default async function StaffLayout({ children }: LayoutProps<"/jobs">) {
         email={session.user.email}
         admin={session.user.role === "admin"}
       />
-      <div className="mx-auto max-w-6xl px-4 py-6">{children}</div>
+      <div className="mx-auto max-w-6xl px-4 py-6 print:max-w-none print:px-0 print:py-0">
+        {children}
+      </div>
     </div>
   );
 }

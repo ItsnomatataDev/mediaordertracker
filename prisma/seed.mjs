@@ -1,8 +1,14 @@
-import { randomUUID } from "node:crypto";
+import { randomBytes, randomUUID, scrypt } from "node:crypto";
 import { PrismaClient } from "@prisma/client";
-import { hashPassword } from "better-auth/crypto";
 
 const prisma = new PrismaClient();
+
+const scryptConfig = {
+  N: 16384,
+  r: 16,
+  p: 1,
+  dkLen: 64,
+};
 
 function required(name) {
   const value = process.env[name];
@@ -10,6 +16,27 @@ function required(name) {
     throw new Error(`Missing ${name}`);
   }
   return value;
+}
+
+function hashPassword(password) {
+  const salt = randomBytes(16).toString("hex");
+  return new Promise((resolve, reject) => {
+    scrypt(
+      password.normalize("NFKC"),
+      salt,
+      scryptConfig.dkLen,
+      {
+        N: scryptConfig.N,
+        r: scryptConfig.r,
+        p: scryptConfig.p,
+        maxmem: 128 * scryptConfig.N * scryptConfig.r * 2,
+      },
+      (err, key) => {
+        if (err) reject(err);
+        else resolve(`${salt}:${key.toString("hex")}`);
+      },
+    );
+  });
 }
 
 async function main() {

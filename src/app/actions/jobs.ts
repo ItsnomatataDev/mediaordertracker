@@ -1,8 +1,8 @@
 "use server";
 
 import { headers } from "next/headers";
-import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { JobStatus } from "@prisma/client";
 import { auth } from "@/lib/auth";
 import { sendJobCreatedEmail, sendReadyEmail, canSendEmail } from "@/lib/email";
@@ -64,14 +64,14 @@ export async function createJobAction(
     }
   }
 
-  redirect(`/jobs/${job.id}/handoff`);
+  redirect(`/packages/${job.id}/handoff`);
 }
 
 export async function updateStatusAction(jobId: string, status: JobStatus) {
   const user = await staffUser();
   await setJobStatus({ jobId, status, actorUserId: user.id });
-  revalidatePath(`/jobs/${jobId}`);
-  revalidatePath("/jobs");
+  revalidatePath(`/packages/${jobId}`);
+  revalidatePath("/packages");
 }
 
 export async function markReadyAction(
@@ -90,8 +90,8 @@ export async function markReadyAction(
     weTransferUrl: parsed.data,
     actorUserId: user.id,
   });
-  revalidatePath(`/jobs/${jobId}`);
-  revalidatePath("/jobs");
+  revalidatePath(`/packages/${jobId}`);
+  revalidatePath("/packages");
 
   if (job.guestEmail && canSendEmail()) {
     try {
@@ -107,19 +107,20 @@ export async function markReadyAction(
       return {
         warning:
           error instanceof Error
-            ? `Job is ready, but email failed: ${error.message}`
-            : "Job is ready, but the email could not be sent.",
+            ? `Package is ready, but email failed: ${error.message}`
+            : "Package is ready, but the email could not be sent.",
       };
     }
   }
 
   if (job.guestEmail && !canSendEmail()) {
     return {
-      warning: "Job is ready. SMTP is not configured yet, so no email was sent. Use WhatsApp or add SMTP settings.",
+      warning:
+        "Package is ready. SMTP is not configured yet, so no email was sent. Use WhatsApp or add SMTP settings.",
     };
   }
 
-  return { success: "Job marked ready." };
+  return { success: "Package marked ready." };
 }
 
 export async function notifyGuestAction(
@@ -129,9 +130,9 @@ export async function notifyGuestAction(
 ): Promise<JobFormState> {
   const user = await staffUser();
   const job = await getJobById(jobId);
-  if (!job) return { error: "Job not found" };
-  if (job.status !== "READY") return { error: "Mark the job ready first" };
-  if (!job.guestEmail) return { error: "Guest has no email on this job" };
+  if (!job) return { error: "Package not found" };
+  if (job.status !== "READY") return { error: "Mark the package ready first" };
+  if (!job.guestEmail) return { error: "Guest has no email on this package" };
   if (!canSendEmail()) {
     return { error: "SMTP is not configured. Share the page link on WhatsApp instead." };
   }
@@ -148,6 +149,6 @@ export async function notifyGuestAction(
     return { error: error instanceof Error ? error.message : "Email failed" };
   }
 
-  revalidatePath(`/jobs/${jobId}`);
+  revalidatePath(`/packages/${jobId}`);
   return { success: `Email sent to ${job.guestEmail}` };
 }

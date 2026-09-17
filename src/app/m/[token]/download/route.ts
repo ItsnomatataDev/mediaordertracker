@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
+import { clientIp } from "@/lib/device";
 import { getAppUrl } from "@/lib/env";
 import { getJobByToken, recordDownloadClick } from "@/lib/jobs";
 
 export async function GET(
-  _request: Request,
+  request: Request,
   context: { params: Promise<{ token: string }> },
 ) {
   const { token } = await context.params;
@@ -12,6 +13,10 @@ export async function GET(
     return NextResponse.redirect(new URL(`/m/${token}`, getAppUrl()));
   }
 
-  await recordDownloadClick(job.id);
+  await recordDownloadClick({
+    jobId: job.id,
+    userAgent: request.headers.get("user-agent") || "",
+    ip: clientIp(request.headers),
+  });
   return NextResponse.redirect(job.weTransferUrl);
 }

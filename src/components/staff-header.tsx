@@ -12,23 +12,26 @@ export function StaffHeader({
   admin: boolean;
 }) {
   return (
-    <header className="border-b border-black bg-black text-white">
+    <header className="print:hidden border-b border-black bg-black text-white">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3">
-        <Link href="/jobs" className="block">
+        <Link href="/packages" className="block">
           <Wordmark className="h-14 w-auto" priority />
         </Link>
         <nav className="flex flex-wrap items-center gap-2 text-sm">
-          <Link href="/jobs" className="px-3 py-1.5 text-white/80 hover:text-white">
-            Jobs
+          <Link href="/packages" className="px-3 py-1.5 text-white/80 hover:text-white">
+            Packages
           </Link>
-          <Link href="/jobs/new" className="btn btn-primary py-1.5">
-            New job
+          <Link href="/packages/new" className="btn btn-primary py-1.5">
+            New package
           </Link>
           {admin ? (
             <Link href="/staff" className="px-3 py-1.5 text-white/80 hover:text-white">
               Staff
             </Link>
           ) : null}
+          <Link href="/account" className="px-3 py-1.5 text-white/80 hover:text-white">
+            Account
+          </Link>
           <span className="hidden px-2 text-white/60 lg:inline">{name || email}</span>
           <SignOutButton />
         </nav>

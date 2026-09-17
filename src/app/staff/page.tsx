@@ -21,7 +21,8 @@ export default async function StaffPage() {
       <div>
         <h1 className="text-2xl font-semibold">Staff accounts</h1>
         <p className="mt-2 text-muted">
-          Nobody can register themselves. Only an admin can add people who work the counter or the media desk.
+          Nobody can register themselves. Invite people who work the counter or the media desk.
+          They get an email with a generated password and must change it after they sign in.
         </p>
         <div className="mt-6">
           <CreateStaffForm />

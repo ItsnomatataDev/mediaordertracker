@@ -45,6 +45,16 @@ export const downloadLinkSchema = z
 export const createStaffSchema = z.object({
   name: z.string().trim().min(2).max(80),
   email: z.email("Enter a valid email"),
-  password: passwordSchema,
   role: z.enum(["staff", "admin"]),
 });
+
+export const changePasswordSchema = z
+  .object({
+    currentPassword: z.string().min(1, "Current password is required"),
+    newPassword: passwordSchema,
+    confirmPassword: z.string().min(1, "Confirm the new password"),
+  })
+  .refine((value) => value.newPassword === value.confirmPassword, {
+    message: "New passwords do not match",
+    path: ["confirmPassword"],
+  });

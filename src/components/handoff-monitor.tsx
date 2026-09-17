@@ -8,6 +8,7 @@ type Status = {
   confirmed: boolean;
   guestName: string;
   viewCount: number;
+  qrScanCount: number;
 };
 
 export function HandoffMonitor({ jobId }: { jobId: string }) {
@@ -16,7 +17,7 @@ export function HandoffMonitor({ jobId }: { jobId: string }) {
   useEffect(() => {
     let active = true;
     const tick = async () => {
-      const response = await fetch(`/api/jobs/${jobId}/handoff`, { cache: "no-store" });
+      const response = await fetch(`/api/packages/${jobId}/handoff`, { cache: "no-store" });
       if (!response.ok || !active) return;
       setStatus(await response.json());
     };
@@ -31,21 +32,21 @@ export function HandoffMonitor({ jobId }: { jobId: string }) {
   if (!status?.viewed) {
     return (
       <p className="border border-orange px-4 py-3 text-center font-medium">
-        Waiting for the guest to open this page on their phone…
+        Waiting for the guest to scan this media receipt…
       </p>
     );
   }
 
   return (
     <div className="bg-black px-4 py-4 text-center text-white">
-      <p className="text-xl font-semibold">Guest has the page</p>
+      <p className="text-xl font-semibold">Guest has the package</p>
       <p className="mt-1 text-sm text-white/80">
         {status.guestName} can leave.{" "}
         {status.confirmed
           ? "Contact details confirmed."
           : "Ask them to confirm email / WhatsApp before they walk away."}
       </p>
-      <Link href="/jobs/new" className="btn btn-primary mt-3">
+      <Link href="/packages/new" className="btn btn-primary mt-3">
         Next guest
       </Link>
     </div>

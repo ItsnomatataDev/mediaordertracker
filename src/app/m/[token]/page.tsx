@@ -1,14 +1,16 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { GuestDetailsForm } from "@/components/guest-details-form";
 import { Wordmark } from "@/components/wordmark";
+import { clientIp, parseAccessSource } from "@/lib/device";
 import { getSupportEmail, getSupportWhatsApp } from "@/lib/env";
 import { customerStatus, customerStatusLabel, whatsappHref } from "@/lib/format";
-import { getJobByToken, recordGuestView } from "@/lib/jobs";
+import { getJobByToken, recordPackageAccess } from "@/lib/jobs";
 import { getSession } from "@/lib/session";
 
 export const metadata: Metadata = {
-  title: "Your flight media",
+  title: "Your media package",
   robots: { index: false, follow: false },
 };
 
@@ -21,15 +23,20 @@ export default async function CustomerPage({
   const job = await getJobByToken(token);
   if (!job) notFound();
 
+  const headerList = await headers();
   const session = await getSession();
-  if (!session?.user) {
-    await recordGuestView(job.id);
-  }
+  await recordPackageAccess({
+    jobId: job.id,
+    source: parseAccessSource(query.src),
+    userAgent: headerList.get("user-agent") || "",
+    ip: clientIp(headerList),
+    isStaff: Boolean(session?.user),
+  });
 
   const status = customerStatus(job.status);
   const supportWhatsApp = getSupportWhatsApp();
   const supportEmail = getSupportEmail();
-  const supportText = `Hi, I need help with my media order ${job.reference}`;
+  const supportText = `Hi, I need help with my media package ${job.reference}`;
 
   return (
     <main className="min-h-full bg-white text-black">
@@ -37,7 +44,10 @@ export default async function CustomerPage({
         <Wordmark className="h-14 w-auto" priority />
       </header>
       <div className="mx-auto flex min-h-full max-w-md flex-col px-5 py-8">
-        <h1 className="text-3xl font-semibold leading-tight">Your Victoria Falls flight media</h1>
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-orange">
+          Media package
+        </p>
+        <h1 className="mt-2 text-3xl font-semibold leading-tight">Your Victoria Falls flight media</h1>
         <p
           className={`badge mt-4 w-fit border px-2 py-0.5 text-[11px] font-semibold uppercase ${
             status === "READY" ? "border-orange bg-orange text-white" : "border-black text-black"
@@ -48,10 +58,10 @@ export default async function CustomerPage({
         <p className="mt-6 text-base leading-relaxed text-muted">
           Hi {job.guestName}.{" "}
           {status === "READY"
-            ? "Your photos and video are ready. Download them from this page — the link never changes."
+            ? "Your photos and video are ready. Download opens WeTransfer from this same package — the link never changes."
             : "Your photos and video are being prepared. Keep this page. Your media will appear here automatically, usually within 24 hours."}
         </p>
-        <p className="mt-3 font-mono text-sm">Order: {job.reference}</p>
+        <p className="mt-3 font-mono text-sm">Package: {job.reference}</p>
         {query.confirmed === "1" ? (
           <p className="notice mt-4">Details saved. You can leave the counter.</p>
         ) : null}
@@ -62,7 +72,7 @@ export default async function CustomerPage({
           </a>
         ) : (
           <div className="notice mt-8">
-            Do not scan the QR on your tax receipt. Bookmark this page or leave it open.
+            Do not scan the QR on your tax receipt. Bookmark this media package or leave it open.
           </div>
         )}
 

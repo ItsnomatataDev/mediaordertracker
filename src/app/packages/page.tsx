@@ -4,18 +4,19 @@ import { formatAge, isOverdue } from "@/lib/format";
 import { searchJobs } from "@/lib/jobs";
 import { requireStaff } from "@/lib/session";
 
-export default async function JobsPage({ searchParams }: PageProps<"/jobs">) {
+export default async function PackagesPage({ searchParams }: PageProps<"/packages">) {
   await requireStaff();
   const params = await searchParams;
   const q = typeof params.q === "string" ? params.q : "";
-  const jobs = await searchJobs(q);
+  const packages = await searchJobs(q);
 
   return (
     <div>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-sm text-muted">Zambezi Helipad</p>
-          <h1 className="text-2xl font-semibold">Jobs</h1>
+          <h1 className="text-2xl font-semibold">Packages</h1>
+          <p className="mt-1 text-sm text-muted">Media packages to deliver to clients.</p>
         </div>
         <form className="flex gap-2">
           <input
@@ -34,17 +35,17 @@ export default async function JobsPage({ searchParams }: PageProps<"/jobs">) {
         <table className="hidden w-full text-left text-sm md:table">
           <thead className="border-b border-line text-xs font-medium text-muted">
             <tr>
-              <th className="px-4 py-3">Job</th>
+              <th className="px-4 py-3">Package</th>
               <th className="px-4 py-3">Guest</th>
               <th className="px-4 py-3">Product</th>
               <th className="px-4 py-3">Status</th>
               <th className="px-4 py-3">Age</th>
-              <th className="px-4 py-3">Access</th>
+              <th className="px-4 py-3">Scans / clicks</th>
               <th className="px-4 py-3"></th>
             </tr>
           </thead>
           <tbody>
-            {jobs.map((job) => {
+            {packages.map((job) => {
               const overdue = isOverdue(job.createdAt, job.status);
               return (
                 <tr
@@ -58,11 +59,12 @@ export default async function JobsPage({ searchParams }: PageProps<"/jobs">) {
                     <StatusBadge status={job.status} />
                   </td>
                   <td className="px-4 py-3 text-muted">{formatAge(job.createdAt)}</td>
-                  <td className="px-4 py-3 text-xs font-semibold">
-                    {job.lastViewedAt ? "VIEWED" : "NOT VIEWED"}
+                  <td className="px-4 py-3 text-xs">
+                    <span className="font-semibold">QR {job.qrScanCount}</span>
+                    <span className="text-muted"> · Portal {job.portalClickCount}</span>
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <Link href={`/jobs/${job.id}`} className="font-medium text-orange">
+                    <Link href={`/packages/${job.id}`} className="font-medium text-orange">
                       Open
                     </Link>
                   </td>
@@ -72,22 +74,22 @@ export default async function JobsPage({ searchParams }: PageProps<"/jobs">) {
           </tbody>
         </table>
         <div className="divide-y divide-line md:hidden">
-          {jobs.map((job) => (
-            <Link key={job.id} href={`/jobs/${job.id}`} className="block px-4 py-3">
+          {packages.map((job) => (
+            <Link key={job.id} href={`/packages/${job.id}`} className="block px-4 py-3">
               <div className="flex items-center justify-between">
                 <span className="font-mono text-xs">{job.reference}</span>
                 <StatusBadge status={job.status} />
               </div>
               <p className="mt-1 font-medium">{job.guestName}</p>
               <p className="text-sm text-muted">
-                {job.product} · {formatAge(job.createdAt)} ·{" "}
-                {job.lastViewedAt ? "Viewed" : "Not viewed"}
+                {job.product} · {formatAge(job.createdAt)} · QR {job.qrScanCount} · Portal{" "}
+                {job.portalClickCount}
               </p>
             </Link>
           ))}
         </div>
-        {jobs.length === 0 ? (
-          <p className="px-4 py-10 text-center text-muted">No jobs yet.</p>
+        {packages.length === 0 ? (
+          <p className="px-4 py-10 text-center text-muted">No packages yet.</p>
         ) : null}
       </div>
     </div>

@@ -19,6 +19,7 @@ model User {
   banned        Boolean?  @default(false)
   banReason     String?
   banExpires    DateTime?
+  mustChangePassword Boolean @default(false)
   sessions      Session[]
   accounts      Account[]
   jobs          Job[]
@@ -122,6 +123,8 @@ model Job {
   readyAt            DateTime?
   lastViewedAt       DateTime?
   viewCount          Int         @default(0)
+  qrScanCount        Int         @default(0)
+  portalClickCount   Int         @default(0)
   downloadClickCount Int         @default(0)
   notifiedAt         DateTime?
   events             JobEvent[]

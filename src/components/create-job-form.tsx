@@ -33,10 +33,13 @@ export function CreateJobForm() {
           ))}
         </select>
       </label>
-      <p className="text-sm text-muted">Email or WhatsApp is enough. The guest will confirm on their phone.</p>
+      <p className="text-sm text-muted">
+        Email or WhatsApp is enough. The guest confirms on their phone after scanning the media
+        receipt — not the tax receipt.
+      </p>
       {state.error ? <p className="notice notice-error">{state.error}</p> : null}
       <button type="submit" disabled={pending} className="btn btn-primary w-full">
-        {pending ? "Creating…" : "Create job and show QR"}
+        {pending ? "Creating…" : "Create package and show QR"}
       </button>
     </form>
   );

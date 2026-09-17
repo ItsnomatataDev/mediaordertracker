@@ -19,28 +19,25 @@ export function CreateStaffForm() {
         <input name="email" type="email" required className="field" />
       </label>
       <label className="block">
-        <span className="mb-1.5 block text-sm font-medium">Temporary password</span>
-        <input
-          name="password"
-          type="password"
-          required
-          minLength={12}
-          autoComplete="new-password"
-          className="field"
-        />
-        <span className="mt-1 block text-xs text-muted">At least 12 characters, with a letter and a number.</span>
-      </label>
-      <label className="block">
         <span className="mb-1.5 block text-sm font-medium">Role</span>
         <select name="role" defaultValue="staff" className="field">
           <option value="staff">Staff</option>
           <option value="admin">Admin</option>
         </select>
       </label>
+      <p className="text-sm text-muted">
+        A password is generated and emailed to them. They must change it after the first sign-in.
+      </p>
       {state.error ? <p className="notice notice-error">{state.error}</p> : null}
       {state.success ? <p className="notice">{state.success}</p> : null}
+      {state.temporaryPassword ? (
+        <p className="notice">
+          Temporary password:{" "}
+          <span className="font-mono font-semibold">{state.temporaryPassword}</span>
+        </p>
+      ) : null}
       <button type="submit" disabled={pending} className="btn btn-black">
-        {pending ? "Creating…" : "Create staff account"}
+        {pending ? "Sending invite…" : "Send invite"}
       </button>
     </form>
   );
