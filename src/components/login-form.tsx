@@ -29,6 +29,10 @@ export function LoginForm({ nextPath }: { nextPath: string }) {
       } | null;
 
       if (!response.ok) {
+        if (response.status >= 500 || response.status === 404) {
+          setError("This copy of the site has no database. Sign in at http://167.233.21.108");
+          return;
+        }
         setError(data?.message || "Invalid email or password");
         return;
       }
@@ -39,6 +43,11 @@ export function LoginForm({ nextPath }: { nextPath: string }) {
       const session = (await sessionRes.json().catch(() => null)) as {
         user?: { mustChangePassword?: boolean };
       } | null;
+
+      if (!session?.user) {
+        setError("Password is correct, but the session cookie was blocked. Use HTTPS, or the live IP while this host is still HTTP.");
+        return;
+      }
 
       const destination = session?.user?.mustChangePassword
         ? "/account?required=1"

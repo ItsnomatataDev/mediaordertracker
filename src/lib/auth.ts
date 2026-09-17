@@ -3,7 +3,7 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 import { nextCookies } from "better-auth/next-js";
 import { admin } from "better-auth/plugins";
 import { prisma } from "@/lib/prisma";
-import { getAppUrl, getAuthSecret, getTrustedOrigins } from "@/lib/env";
+import { getAppUrl, getAuthSecret, getTrustedOrigins, useSecureAuthCookies } from "@/lib/env";
 
 export const auth = betterAuth({
   appName: "IT's No Matata Media Portal",
@@ -51,8 +51,7 @@ export const auth = betterAuth({
   },
   advanced: {
     cookiePrefix: "matata",
-    useSecureCookies:
-      process.env.NODE_ENV === "production" && getAppUrl().startsWith("https://"),
+    useSecureCookies: useSecureAuthCookies(),
     ipAddress: {
       ipAddressHeaders: ["x-forwarded-for", "x-real-ip"],
     },

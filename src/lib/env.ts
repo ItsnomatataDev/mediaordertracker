@@ -57,6 +57,12 @@ export function getSupportEmail() {
   return process.env.SUPPORT_EMAIL || "";
 }
 
+export function useSecureAuthCookies() {
+  if (process.env.COOKIE_SECURE === "false") return false;
+  if (process.env.COOKIE_SECURE === "true") return true;
+  return process.env.NODE_ENV === "production" && getAppUrl().startsWith("https://");
+}
+
 export function getAuthSecret() {
   const value = process.env.BETTER_AUTH_SECRET;
   if (value) return value;
