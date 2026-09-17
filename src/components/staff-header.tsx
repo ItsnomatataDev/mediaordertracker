@@ -21,7 +21,7 @@ export function StaffHeader({
           <Link href="/packages" className="px-3 py-1.5 text-white/80 hover:text-white">
             Packages
           </Link>
-          <Link href="/packages/new" className="btn btn-primary py-1.5">
+          <Link href="/packages/new" className="px-3 py-1.5 text-white/80 hover:text-white">
             New package
           </Link>
           {admin ? (
