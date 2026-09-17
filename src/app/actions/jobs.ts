@@ -39,6 +39,7 @@ export async function createJobAction(
     guestEmail: String(formData.get("guestEmail") || "").trim(),
     guestPhone: String(formData.get("guestPhone") || "").trim(),
     product: String(formData.get("product") || ""),
+    location: String(formData.get("location") || ""),
   });
 
   if (!parsed.success) {

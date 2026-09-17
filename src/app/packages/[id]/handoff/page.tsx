@@ -22,6 +22,7 @@ export default async function HandoffPage({ params }: PageProps<"/packages/[id]/
         reference={job.reference}
         guestName={job.guestName}
         product={job.product}
+        location={job.location}
         url={url}
       />
       <div className="mt-6 space-y-3 print:hidden">

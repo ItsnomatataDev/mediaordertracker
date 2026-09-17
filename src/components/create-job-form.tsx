@@ -2,7 +2,7 @@
 
 import { useActionState } from "react";
 import { createJobAction, type JobFormState } from "@/app/actions/jobs";
-import { PRODUCTS } from "@/lib/constants";
+import { LOCATIONS, PRODUCTS } from "@/lib/constants";
 
 const initial: JobFormState = {};
 
@@ -11,6 +11,16 @@ export function CreateJobForm() {
 
   return (
     <form action={action} className="max-w-lg space-y-4">
+      <label className="block">
+        <span className="mb-1.5 block text-sm font-medium">Location</span>
+        <select name="location" required defaultValue="ZHC" className="field">
+          {LOCATIONS.map((location) => (
+            <option key={location.code} value={location.code}>
+              {location.code} — {location.label}
+            </option>
+          ))}
+        </select>
+      </label>
       <label className="block">
         <span className="mb-1.5 block text-sm font-medium">Guest name</span>
         <input name="guestName" required autoComplete="name" className="field" />

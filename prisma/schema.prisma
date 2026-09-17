@@ -114,6 +114,7 @@ model Job {
   guestPhone         String?
   detailsConfirmedAt DateTime?
   product            String
+  location           String      @default("ZHC")
   status             JobStatus   @default(NEW)
   weTransferUrl      String?
   createdById        String
@@ -130,6 +131,7 @@ model Job {
   events             JobEvent[]
 
   @@index([status])
+  @@index([location])
   @@index([createdAt])
   @@index([guestEmail])
   @@index([guestPhone])

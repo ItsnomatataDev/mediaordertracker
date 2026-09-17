@@ -1,3 +1,10 @@
+function isBuildTime() {
+  return (
+    process.env.NEXT_PHASE === "phase-production-build" ||
+    process.env.NEXT_PHASE === "phase-production-compile"
+  );
+}
+
 function required(name: string) {
   const value = process.env[name];
   if (!value) {
@@ -26,6 +33,13 @@ export function getSupportEmail() {
 }
 
 export function getAuthSecret() {
+  const value = process.env.BETTER_AUTH_SECRET;
+  if (value) return value;
+  // Next collects page data at build time and imports auth. A dummy is enough
+  // there; runtime still requires the real secret.
+  if (isBuildTime()) {
+    return "build-placeholder-not-used-at-runtime";
+  }
   return required("BETTER_AUTH_SECRET");
 }
 

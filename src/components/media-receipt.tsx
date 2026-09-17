@@ -5,12 +5,14 @@ export function MediaReceipt({
   reference,
   guestName,
   product,
+  location,
   url,
 }: {
   qr: string;
   reference: string;
   guestName: string;
   product: string;
+  location: string;
   url: string;
 }) {
   return (
@@ -24,7 +26,9 @@ export function MediaReceipt({
       <div className="px-5 py-5 text-center">
         <p className="text-sm text-muted">Not a tax receipt. Scan for your photos and video.</p>
         <h1 className="mt-2 text-2xl font-semibold">{guestName}</h1>
-        <p className="mt-1 text-sm">{product}</p>
+        <p className="mt-1 text-sm">
+          {location} · {product}
+        </p>
         <div className="mx-auto mt-5 w-fit border border-black p-2">
           <img src={qr} alt={`QR for media package ${reference}`} width={280} height={280} className="h-[280px] w-[280px]" />
         </div>
@@ -36,7 +40,7 @@ export function MediaReceipt({
         <p className="mt-3 break-all text-[11px] text-muted">{url}</p>
       </div>
       <div className="border-t border-black px-5 py-3 text-center text-[11px] uppercase tracking-wide">
-        IT&apos;s No Matata · Zambezi Helipad
+        IT&apos;s No Matata · {location}
       </div>
     </article>
   );

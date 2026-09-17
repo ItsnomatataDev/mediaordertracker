@@ -36,6 +36,7 @@ export default async function PrintReceiptPage({
         reference={job.reference}
         product={job.product}
         guestName={job.guestName}
+        location={job.location}
         url={url}
       />
     </div>

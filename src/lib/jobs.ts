@@ -1,13 +1,13 @@
 import { JobEventType, JobStatus, Prisma } from "@prisma/client";
 import { customAlphabet } from "nanoid";
-import { PRODUCTS } from "@/lib/constants";
+import { LOCATION_CODES, PRODUCTS, type LocationCode } from "@/lib/constants";
 import {
   type AccessSource,
   type DeviceInfo,
   deviceSummary,
   parseDevice,
 } from "@/lib/device";
-import { getAppUrl, getLocationPrefix } from "@/lib/env";
+import { getAppUrl } from "@/lib/env";
 import { harareDateKey, jobPublicPath } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
 
@@ -45,13 +45,17 @@ export async function createJob(input: {
   guestEmail?: string;
   guestPhone?: string;
   product: string;
+  location: LocationCode;
   createdById: string;
 }) {
   if (!PRODUCTS.includes(input.product as (typeof PRODUCTS)[number])) {
     throw new Error("Unknown product");
   }
+  if (!LOCATION_CODES.includes(input.location)) {
+    throw new Error("Unknown location");
+  }
 
-  const locationPrefix = getLocationPrefix();
+  const locationPrefix = input.location;
   const dateKey = harareDateKey();
   const publicToken = tokenAlphabet();
 
@@ -73,6 +77,7 @@ export async function createJob(input: {
         guestEmail: input.guestEmail || null,
         guestPhone: input.guestPhone || null,
         product: input.product,
+        location: locationPrefix,
         createdById: input.createdById,
       },
     });
@@ -92,20 +97,26 @@ export async function createJob(input: {
   return job;
 }
 
-export async function searchJobs(query?: string) {
+export async function searchJobs(query?: string, location?: string) {
   const trimmed = query?.trim();
+  const locationFilter =
+    location && LOCATION_CODES.includes(location as LocationCode) ? location : undefined;
   return prisma.job.findMany({
-    where: trimmed
-      ? {
-          OR: [
-            { reference: { contains: trimmed, mode: "insensitive" } },
-            { guestName: { contains: trimmed, mode: "insensitive" } },
-            { guestEmail: { contains: trimmed, mode: "insensitive" } },
-            { guestPhone: { contains: trimmed, mode: "insensitive" } },
-            { publicToken: { contains: trimmed, mode: "insensitive" } },
-          ],
-        }
-      : undefined,
+    where: {
+      ...(locationFilter ? { location: locationFilter } : {}),
+      ...(trimmed
+        ? {
+            OR: [
+              { reference: { contains: trimmed, mode: "insensitive" } },
+              { guestName: { contains: trimmed, mode: "insensitive" } },
+              { guestEmail: { contains: trimmed, mode: "insensitive" } },
+              { guestPhone: { contains: trimmed, mode: "insensitive" } },
+              { publicToken: { contains: trimmed, mode: "insensitive" } },
+              { location: { contains: trimmed, mode: "insensitive" } },
+            ],
+          }
+        : {}),
+    },
     include: { createdBy: { select: { name: true } } },
     orderBy: { createdAt: "desc" },
     take: 100,

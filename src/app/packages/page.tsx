@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { StatusBadge } from "@/components/status-badge";
+import { LOCATIONS, locationLabel } from "@/lib/constants";
 import { formatAge, isOverdue } from "@/lib/format";
 import { searchJobs } from "@/lib/jobs";
 import { requireStaff } from "@/lib/session";
@@ -8,17 +9,28 @@ export default async function PackagesPage({ searchParams }: PageProps<"/package
   await requireStaff();
   const params = await searchParams;
   const q = typeof params.q === "string" ? params.q : "";
-  const packages = await searchJobs(q);
+  const location = typeof params.location === "string" ? params.location : "";
+  const packages = await searchJobs(q, location);
 
   return (
     <div>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-sm text-muted">Zambezi Helipad</p>
+          <p className="text-sm text-muted">
+            {location ? locationLabel(location) : "ZHC · JETBOAT · EleCre"}
+          </p>
           <h1 className="text-2xl font-semibold">Packages</h1>
           <p className="mt-1 text-sm text-muted">Media packages to deliver to clients.</p>
         </div>
-        <form className="flex gap-2">
+        <form className="flex flex-wrap gap-2">
+          <select name="location" defaultValue={location} className="field w-44">
+            <option value="">All locations</option>
+            {LOCATIONS.map((item) => (
+              <option key={item.code} value={item.code}>
+                {item.code}
+              </option>
+            ))}
+          </select>
           <input
             name="q"
             defaultValue={q}
@@ -36,6 +48,7 @@ export default async function PackagesPage({ searchParams }: PageProps<"/package
           <thead className="border-b border-line text-xs font-medium text-muted">
             <tr>
               <th className="px-4 py-3">Package</th>
+              <th className="px-4 py-3">Location</th>
               <th className="px-4 py-3">Guest</th>
               <th className="px-4 py-3">Product</th>
               <th className="px-4 py-3">Status</th>
@@ -53,6 +66,7 @@ export default async function PackagesPage({ searchParams }: PageProps<"/package
                   className={`border-t border-line ${overdue ? "bg-orange-soft" : ""}`}
                 >
                   <td className="px-4 py-3 font-mono text-xs">{job.reference}</td>
+                  <td className="px-4 py-3">{job.location}</td>
                   <td className="px-4 py-3">{job.guestName}</td>
                   <td className="px-4 py-3">{job.product}</td>
                   <td className="px-4 py-3">
@@ -82,8 +96,8 @@ export default async function PackagesPage({ searchParams }: PageProps<"/package
               </div>
               <p className="mt-1 font-medium">{job.guestName}</p>
               <p className="text-sm text-muted">
-                {job.product} · {formatAge(job.createdAt)} · QR {job.qrScanCount} · Portal{" "}
-                {job.portalClickCount}
+                {job.location} · {job.product} · {formatAge(job.createdAt)} · QR {job.qrScanCount} ·
+                Portal {job.portalClickCount}
               </p>
             </Link>
           ))}

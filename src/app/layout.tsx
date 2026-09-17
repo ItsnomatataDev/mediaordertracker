@@ -13,7 +13,7 @@ export const metadata: Metadata = {
     default: "IT's No Matata · Media Portal",
     template: "%s · IT's No Matata",
   },
-  description: "Permanent helicopter media collection for Zambezi Helipad.",
+  description: "Media package collection for ZHC, JETBOAT and EleCre.",
   robots: { index: false, follow: false },
   icons: {
     icon: "/logo.png",

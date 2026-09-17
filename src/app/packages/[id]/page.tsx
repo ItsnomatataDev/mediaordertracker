@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { ActivityLog } from "@/components/activity-log";
 import { ProductionControls } from "@/components/production-controls";
 import { StatusBadge } from "@/components/status-badge";
+import { locationLabel } from "@/lib/constants";
 import { formatAge, formatDateTime, isOverdue, whatsappHref } from "@/lib/format";
 import { getJobById, packageAccessStats, publicJobUrl } from "@/lib/jobs";
 import { requireStaff } from "@/lib/session";
@@ -34,7 +35,8 @@ export default async function PackageDetailPage({ params }: PageProps<"/packages
             ) : null}
           </div>
           <p className="mt-2 text-muted">
-            {job.product} · {formatAge(job.createdAt)} · created by {job.createdBy.name}
+            {locationLabel(job.location)} · {job.product} · {formatAge(job.createdAt)} · created by{" "}
+            {job.createdBy.name}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
