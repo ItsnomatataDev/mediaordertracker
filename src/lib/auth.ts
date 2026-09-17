@@ -20,6 +20,7 @@ export const auth = betterAuth({
         required: false,
         defaultValue: false,
         input: false,
+        returned: true,
       },
     },
   },
@@ -34,8 +35,7 @@ export const auth = betterAuth({
     expiresIn: 60 * 60 * 12,
     updateAge: 60 * 30,
     cookieCache: {
-      enabled: true,
-      maxAge: 60 * 5,
+      enabled: false,
     },
   },
   rateLimit: {

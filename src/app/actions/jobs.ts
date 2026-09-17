@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { JobStatus } from "@prisma/client";
 import { auth } from "@/lib/auth";
 import { sendJobCreatedEmail, sendReadyEmail, canSendEmail } from "@/lib/email";
+import { getPublicAppUrl } from "@/lib/env";
 import {
   createJob,
   getJobById,
@@ -58,6 +59,7 @@ export async function createJobAction(
         guestName: job.guestName,
         reference: job.reference,
         publicToken: job.publicToken,
+        origin: getPublicAppUrl(await headers()),
       });
       await recordEmailSent(job.id, user.id, job.guestEmail);
     } catch (error) {
@@ -101,6 +103,7 @@ export async function markReadyAction(
         guestName: job.guestName,
         reference: job.reference,
         publicToken: job.publicToken,
+        origin: getPublicAppUrl(await headers()),
       });
       await recordEmailSent(job.id, user.id, job.guestEmail);
       return { success: `Ready. Email sent to ${job.guestEmail}.` };
@@ -144,6 +147,7 @@ export async function notifyGuestAction(
       guestName: job.guestName,
       reference: job.reference,
       publicToken: job.publicToken,
+      origin: getPublicAppUrl(await headers()),
     });
     await recordEmailSent(job.id, user.id, job.guestEmail);
   } catch (error) {

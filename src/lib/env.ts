@@ -13,15 +13,39 @@ function required(name: string) {
   return value;
 }
 
+const INTERNAL_HOST = /^(localhost|127\.0\.0\.1|0\.0\.0\.0|app)(:\d+)?$/i;
+
+function trimSlash(value: string) {
+  return value.replace(/\/$/, "");
+}
+
 export function getAppUrl() {
   const fromEnv = process.env.APP_URL || process.env.BETTER_AUTH_URL;
-  if (fromEnv) return fromEnv.replace(/\/$/, "");
+  if (fromEnv) return trimSlash(fromEnv);
   if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
   return "http://localhost:3000";
 }
 
+export function getPublicAppUrl(headerList?: Headers | null) {
+  if (headerList) {
+    const host = (headerList.get("x-forwarded-host") || headerList.get("host") || "")
+      .split(",")[0]
+      .trim();
+    const proto = (headerList.get("x-forwarded-proto") || "").split(",")[0].trim();
+    if (host && !INTERNAL_HOST.test(host)) {
+      const scheme = proto === "https" || proto === "http" ? proto : "http";
+      return trimSlash(`${scheme}://${host}`);
+    }
+  }
+  return getAppUrl();
+}
+
 export function getTrustedOrigins() {
   const origins = new Set<string>([getAppUrl()]);
+  for (const extra of (process.env.AUTH_TRUSTED_ORIGINS || "").split(",")) {
+    const value = trimSlash(extra.trim());
+    if (value) origins.add(value);
+  }
   if (process.env.VERCEL_URL) {
     origins.add(`https://${process.env.VERCEL_URL}`);
   }
@@ -55,15 +79,41 @@ export function getAuthSecret() {
 }
 
 export function smtpConfig() {
-  const host = process.env.SMTP_HOST;
-  const user = process.env.SMTP_USER;
-  const pass = process.env.SMTP_PASS;
+  const host = (process.env.SMTP_HOST || "").trim();
+  const user = (process.env.SMTP_USER || "").trim();
+  const pass = (process.env.SMTP_PASS || "").trim().replaceAll(" ", "");
   if (!host || !user || !pass) return null;
   return {
     host,
     port: Number(process.env.SMTP_PORT || 587),
     user,
     pass,
-    from: process.env.SMTP_FROM || user,
+    from: (process.env.SMTP_FROM || user).trim(),
   };
+}
+
+export function getSmtpStatus() {
+  const smtp = smtpConfig();
+  if (!smtp) {
+    return {
+      configured: false as const,
+      message:
+        "Mail is not configured yet (SMTP_PASS is empty). Invites still create accounts; share the temporary password until Google Workspace mail is set.",
+    };
+  }
+  return {
+    configured: true as const,
+    message: `Invites send from ${smtp.from} via ${smtp.host}.`,
+  };
+}
+
+export function smtpErrorMessage(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error);
+  if (/EAUTH|invalid login|username and password not accepted/i.test(message)) {
+    return "SMTP login failed. Use a Google Workspace app password in SMTP_PASS.";
+  }
+  if (/ECONNECTION|ETIMEDOUT|ECONNREFUSED|ENOTFOUND/i.test(message)) {
+    return "Could not reach the mail server. Check SMTP_HOST and that outbound 465/587 is open.";
+  }
+  return message || "Could not send the invite email.";
 }

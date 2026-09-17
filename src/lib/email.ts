@@ -1,6 +1,6 @@
 import nodemailer from "nodemailer";
 import type SMTPTransport from "nodemailer/lib/smtp-transport";
-import { getAppUrl, getSupportEmail, smtpConfig } from "@/lib/env";
+import { getAppUrl, getPublicAppUrl, getSupportEmail, smtpConfig, smtpErrorMessage } from "@/lib/env";
 import { jobPublicPath } from "@/lib/format";
 
 export function canSendEmail() {
@@ -33,8 +33,8 @@ function transporter() {
   return nodemailer.createTransport(options);
 }
 
-function logoUrl() {
-  return `${getAppUrl()}/logo.png`;
+function logoUrl(origin?: string) {
+  return `${origin || getAppUrl()}/logo.png`;
 }
 
 function brandedHtml(input: {
@@ -46,6 +46,7 @@ function brandedHtml(input: {
   footnote?: string;
 }) {
   const support = getSupportEmail();
+  const origin = new URL(input.ctaUrl).origin;
   return `<!DOCTYPE html>
 <html>
 <body style="margin:0;padding:0;background:#ffffff;color:#0a0a0a;font-family:Arial,Helvetica,sans-serif;">
@@ -56,7 +57,7 @@ function brandedHtml(input: {
         <table role="presentation" width="560" cellspacing="0" cellpadding="0" style="max-width:560px;width:100%;border:1px solid #e5e5e5;">
           <tr>
             <td style="background:#0a0a0a;padding:20px 24px;text-align:center;">
-              <img src="${logoUrl()}" alt="IT's No Matata" width="96" height="96" style="display:block;margin:0 auto;border:0;" />
+              <img src="${logoUrl(origin)}" alt="IT's No Matata" width="96" height="96" style="display:block;margin:0 auto;border:0;" />
             </td>
           </tr>
           <tr>
@@ -104,14 +105,18 @@ async function send(input: {
   }
 
   const mailer = transporter();
-  await mailer.sendMail({
-    from: smtp.from,
-    replyTo: getSupportEmail() || smtp.user,
-    to: input.to,
-    subject: input.subject,
-    text: input.text,
-    html: input.html,
-  });
+  try {
+    await mailer.sendMail({
+      from: smtp.from,
+      replyTo: getSupportEmail() || smtp.user,
+      to: input.to,
+      subject: input.subject,
+      text: input.text,
+      html: input.html,
+    });
+  } catch (error) {
+    throw new Error(smtpErrorMessage(error));
+  }
 }
 
 export async function sendJobCreatedEmail(input: {
@@ -119,8 +124,9 @@ export async function sendJobCreatedEmail(input: {
   guestName: string;
   reference: string;
   publicToken: string;
+  origin?: string;
 }) {
-  const pageUrl = `${getAppUrl()}${jobPublicPath(input.publicToken)}?src=email`;
+  const pageUrl = `${input.origin || getPublicAppUrl()}${jobPublicPath(input.publicToken)}?src=email`;
   await send({
     to: input.to,
     subject: `Keep this link for your Victoria Falls flight media (${input.reference})`,
@@ -153,8 +159,9 @@ export async function sendReadyEmail(input: {
   guestName: string;
   reference: string;
   publicToken: string;
+  origin?: string;
 }) {
-  const pageUrl = `${getAppUrl()}${jobPublicPath(input.publicToken)}?src=email`;
+  const pageUrl = `${input.origin || getPublicAppUrl()}${jobPublicPath(input.publicToken)}?src=email`;
   await send({
     to: input.to,
     subject: `Your Victoria Falls flight media is ready (${input.reference})`,
@@ -185,8 +192,9 @@ export async function sendStaffInviteEmail(input: {
   name: string;
   password: string;
   role: "staff" | "admin";
+  loginUrl?: string;
 }) {
-  const loginUrl = `${getAppUrl()}/login`;
+  const loginUrl = input.loginUrl || `${getPublicAppUrl()}/login`;
   const roleLabel = input.role === "admin" ? "administrator" : "staff";
   await send({
     to: input.to,

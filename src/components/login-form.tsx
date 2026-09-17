@@ -26,7 +26,6 @@ export function LoginForm({ nextPath }: { nextPath: string }) {
       });
       const data = (await response.json().catch(() => null)) as {
         message?: string;
-        user?: { mustChangePassword?: boolean };
       } | null;
 
       if (!response.ok) {
@@ -34,12 +33,18 @@ export function LoginForm({ nextPath }: { nextPath: string }) {
         return;
       }
 
-      const destination =
-        data?.user?.mustChangePassword
-          ? "/account?required=1"
-          : nextPath.startsWith("/")
-            ? nextPath
-            : "/packages";
+      const sessionRes = await fetch("/api/auth/get-session", {
+        credentials: "include",
+      });
+      const session = (await sessionRes.json().catch(() => null)) as {
+        user?: { mustChangePassword?: boolean };
+      } | null;
+
+      const destination = session?.user?.mustChangePassword
+        ? "/account?required=1"
+        : nextPath.startsWith("/")
+          ? nextPath
+          : "/packages";
       router.push(destination);
       router.refresh();
     } catch {

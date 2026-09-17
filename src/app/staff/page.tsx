@@ -1,9 +1,11 @@
 import { CreateStaffForm } from "@/components/create-staff-form";
+import { getSmtpStatus } from "@/lib/env";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/session";
 
 export default async function StaffPage() {
   await requireAdmin();
+  const smtp = getSmtpStatus();
   const users = await prisma.user.findMany({
     orderBy: { createdAt: "asc" },
     select: {
@@ -12,6 +14,7 @@ export default async function StaffPage() {
       email: true,
       role: true,
       banned: true,
+      mustChangePassword: true,
       createdAt: true,
     },
   });
@@ -24,6 +27,7 @@ export default async function StaffPage() {
           Nobody can register themselves. Invite people who work the counter or the media desk.
           They get an email with a generated password and must change it after they sign in.
         </p>
+        <p className={`mt-4 notice ${smtp.configured ? "" : "notice-error"}`}>{smtp.message}</p>
         <div className="mt-6">
           <CreateStaffForm />
         </div>
@@ -37,6 +41,7 @@ export default async function StaffPage() {
               <p className="mt-1 text-xs font-semibold uppercase text-muted">
                 {user.role === "admin" ? "Admin" : "Staff"}
                 {user.banned ? " · disabled" : ""}
+                {user.mustChangePassword ? " · must change password" : ""}
               </p>
             </li>
           ))}
