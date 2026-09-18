@@ -41,11 +41,11 @@ export async function POST(request: Request) {
   } catch (error) {
     if (error instanceof APIError) {
       return NextResponse.json(
-        { error: error.message || "Could not change password" },
+        { error: error.message || "Could not change PIN" },
         { status: 400 },
       );
     }
-    return NextResponse.json({ error: "Could not change password" }, { status: 500 });
+    return NextResponse.json({ error: "Could not change PIN" }, { status: 500 });
   }
 
   await prisma.user.update({
@@ -54,6 +54,6 @@ export async function POST(request: Request) {
   });
 
   return NextResponse.json({
-    success: "Password updated. Use it the next time you sign in.",
+    success: "PIN updated. Use it the next time you sign in.",
   });
 }

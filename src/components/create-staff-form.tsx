@@ -83,15 +83,15 @@ export function CreateStaffForm() {
         </select>
       </label>
       <p className="text-sm text-muted">
-        A password is generated and emailed to them. They must change it after the first sign-in.
-        Inviting the same email again issues a new password.
+        A temporary PIN is generated and emailed to them. They must change it after the first
+        sign-in, then add an authenticator app. Inviting the same email again issues a new PIN.
       </p>
       {error ? <p className="notice notice-error">{error}</p> : null}
       {success ? <p className="notice">{success}</p> : null}
       {mailError ? <p className="notice notice-error">{mailError}</p> : null}
       {temporaryPassword ? (
         <p className="notice">
-          Temporary password:{" "}
+          Temporary PIN:{" "}
           <span className="font-mono font-semibold">{temporaryPassword}</span>
           <button
             type="button"

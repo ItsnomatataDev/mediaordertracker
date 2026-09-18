@@ -1,6 +1,6 @@
 import { JobEventType, JobStatus, Prisma } from "@prisma/client";
 import { customAlphabet } from "nanoid";
-import { LOCATION_CODES, type LocationCode } from "@/lib/constants";
+import { LOCATION_CODES, parseJobStatus, type LocationCode } from "@/lib/constants";
 import {
   type AccessSource,
   type DeviceInfo,
@@ -8,7 +8,7 @@ import {
   parseDevice,
 } from "@/lib/device";
 import { getAppUrl } from "@/lib/env";
-import { harareDateKey, jobPublicPath } from "@/lib/format";
+import { harareDateBounds, harareDateKey, jobPublicPath } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
 
 const tokenAlphabet = customAlphabet(
@@ -45,6 +45,7 @@ export async function createJob(input: {
   guestEmail?: string;
   guestPhone?: string;
   location: LocationCode;
+  invoiceNumber: string;
   createdById: string;
 }) {
   if (!LOCATION_CODES.includes(input.location)) {
@@ -72,6 +73,7 @@ export async function createJob(input: {
         guestName: input.guestName,
         guestEmail: input.guestEmail || null,
         guestPhone: input.guestPhone || null,
+        invoiceNumber: input.invoiceNumber,
         location: locationPrefix,
         createdById: input.createdById,
       },
@@ -81,7 +83,7 @@ export async function createJob(input: {
       data: {
         jobId: created.id,
         type: "CREATED",
-        message: `Package ${created.reference} created for ${created.guestName}`,
+        message: `Package ${created.reference} created for ${created.guestName} · invoice ${created.invoiceNumber}`,
         actorUserId: input.createdById,
       },
     });
@@ -92,22 +94,37 @@ export async function createJob(input: {
   return job;
 }
 
-export async function searchJobs(query?: string, location?: string) {
-  const trimmed = query?.trim();
+export async function searchJobs(filters: {
+  query?: string;
+  location?: string;
+  status?: string;
+  date?: string;
+}) {
+  const trimmed = filters.query?.trim();
   const locationFilter =
-    location && LOCATION_CODES.includes(location as LocationCode) ? location : undefined;
+    filters.location && LOCATION_CODES.includes(filters.location as LocationCode)
+      ? filters.location
+      : undefined;
+  const statusFilter = parseJobStatus(filters.status);
+  const day = filters.date ? harareDateBounds(filters.date) : null;
+  const statusFromQuery = parseJobStatus(trimmed);
+
   return prisma.job.findMany({
     where: {
       ...(locationFilter ? { location: locationFilter } : {}),
+      ...(statusFilter ? { status: statusFilter } : {}),
+      ...(day ? { createdAt: { gte: day.start, lt: day.end } } : {}),
       ...(trimmed
         ? {
             OR: [
               { reference: { contains: trimmed, mode: "insensitive" } },
+              { invoiceNumber: { contains: trimmed, mode: "insensitive" } },
               { guestName: { contains: trimmed, mode: "insensitive" } },
               { guestEmail: { contains: trimmed, mode: "insensitive" } },
               { guestPhone: { contains: trimmed, mode: "insensitive" } },
               { publicToken: { contains: trimmed, mode: "insensitive" } },
               { location: { contains: trimmed, mode: "insensitive" } },
+              ...(statusFromQuery && !statusFilter ? [{ status: statusFromQuery }] : []),
             ],
           }
         : {}),
@@ -123,6 +140,10 @@ export async function getJobById(id: string) {
     where: { id },
     include: {
       createdBy: { select: { name: true, email: true } },
+      photos: {
+        select: { id: true, createdAt: true },
+        orderBy: { createdAt: "asc" },
+      },
       events: {
         orderBy: { createdAt: "desc" },
         include: { actor: { select: { name: true } } },
@@ -134,7 +155,76 @@ export async function getJobById(id: string) {
 export async function getJobByToken(publicToken: string) {
   return prisma.job.findUnique({
     where: { publicToken },
+    include: {
+      photos: {
+        select: { id: true, createdAt: true },
+        orderBy: { createdAt: "asc" },
+      },
+    },
   });
+}
+
+const MAX_PHOTOS = 10;
+const MAX_PHOTO_BYTES = 2_000_000;
+
+export async function addJobPhoto(input: {
+  jobId: string;
+  mimeType: string;
+  data: Uint8Array;
+  actorUserId: string;
+}) {
+  const count = await prisma.jobPhoto.count({ where: { jobId: input.jobId } });
+  if (count >= MAX_PHOTOS) {
+    throw new Error(`This package already has ${MAX_PHOTOS} photos`);
+  }
+  if (input.data.length > MAX_PHOTO_BYTES) {
+    throw new Error("Photo is too large. Take it again a bit smaller.");
+  }
+  const allowed = ["image/jpeg", "image/png", "image/webp"];
+  if (!allowed.includes(input.mimeType)) {
+    throw new Error("Use a phone camera photo (JPEG, PNG, or WebP)");
+  }
+
+  const photo = await prisma.jobPhoto.create({
+    data: {
+      jobId: input.jobId,
+      mimeType: input.mimeType,
+      data: new Uint8Array(input.data),
+    },
+    select: { id: true, createdAt: true },
+  });
+  await logEvent({
+    jobId: input.jobId,
+    type: "PHOTO_ADDED",
+    message: "Buyer photo added",
+    actorUserId: input.actorUserId,
+  });
+  return photo;
+}
+
+export async function getJobPhoto(photoId: string) {
+  return prisma.jobPhoto.findUnique({
+    where: { id: photoId },
+    include: {
+      job: { select: { id: true, publicToken: true } },
+    },
+  });
+}
+
+export async function deleteJobPhoto(input: { photoId: string; actorUserId: string }) {
+  const photo = await prisma.jobPhoto.findUnique({
+    where: { id: input.photoId },
+    select: { id: true, jobId: true },
+  });
+  if (!photo) return null;
+  await prisma.jobPhoto.delete({ where: { id: photo.id } });
+  await logEvent({
+    jobId: photo.jobId,
+    type: "PHOTO_REMOVED",
+    message: "Buyer photo removed",
+    actorUserId: input.actorUserId,
+  });
+  return photo;
 }
 
 export async function recordPackageAccess(input: {

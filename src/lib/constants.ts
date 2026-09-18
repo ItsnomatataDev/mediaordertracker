@@ -20,3 +20,10 @@ export const TIMEZONE = "Africa/Harare";
 export const READY_SLA_HOURS = 24;
 
 export const STAFF_STATUSES = ["NEW", "EDITING", "UPLOADING", "READY"] as const;
+
+export type StaffStatus = (typeof STAFF_STATUSES)[number];
+
+export function parseJobStatus(value?: string | null): StaffStatus | undefined {
+  const upper = value?.trim().toUpperCase();
+  return STAFF_STATUSES.find((status) => status === upper);
+}

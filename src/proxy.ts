@@ -23,7 +23,8 @@ export function proxy(request: NextRequest) {
   const isStaffRoute =
     pathname.startsWith("/packages") ||
     pathname.startsWith("/staff") ||
-    pathname.startsWith("/account");
+    pathname.startsWith("/account") ||
+    pathname.startsWith("/pending");
 
   if (isStaffRoute && !sessionCookie) {
     const login = new URL("/login", request.url);
@@ -31,7 +32,7 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(login);
   }
 
-  if (pathname === "/login" && sessionCookie) {
+  if ((pathname === "/login" || pathname === "/signup") && sessionCookie) {
     return NextResponse.redirect(new URL("/packages", request.url));
   }
 
@@ -49,5 +50,8 @@ export const config = {
     "/account",
     "/account/:path*",
     "/login",
+    "/login/:path*",
+    "/signup",
+    "/pending",
   ],
 };

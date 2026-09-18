@@ -36,7 +36,7 @@ export async function loginAction(_prev: LoginState, formData: FormData): Promis
     });
   } catch (error) {
     if (error instanceof APIError) {
-      return { error: "Invalid email or password" };
+      return { error: "Invalid email or PIN" };
     }
     return { error: "Could not sign in. Try again." };
   }
@@ -87,9 +87,9 @@ export async function changePasswordAction(
     });
   } catch (error) {
     if (error instanceof APIError) {
-      return { error: error.message || "Could not change password" };
+      return { error: error.message || "Could not change PIN" };
     }
-    return { error: "Could not change password" };
+    return { error: "Could not change PIN" };
   }
 
   await prisma.user.update({
@@ -97,5 +97,5 @@ export async function changePasswordAction(
     data: { mustChangePassword: false },
   });
 
-  return { success: "Password updated. Use it the next time you sign in." };
+  return { success: "PIN updated. Use it the next time you sign in." };
 }

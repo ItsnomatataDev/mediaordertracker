@@ -89,7 +89,7 @@ export function getMailStatus() {
     return {
       configured: false as const,
       message:
-        "Mail is not configured yet (RESEND_API_KEY is empty). Invites still create accounts; share the temporary password until Resend is set.",
+        "Mail is not configured yet (RESEND_API_KEY is empty). Invites still create accounts; share the temporary PIN until Resend is set.",
     };
   }
   return {

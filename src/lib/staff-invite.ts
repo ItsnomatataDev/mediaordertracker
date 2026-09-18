@@ -53,6 +53,7 @@ export async function inviteStaff(input: {
           role,
           mustChangePassword: true,
           emailVerified: true,
+          approved: true,
         },
       });
       await auth.api.revokeUserSessions({
@@ -66,13 +67,13 @@ export async function inviteStaff(input: {
           email,
           password,
           role,
-          data: { emailVerified: true, mustChangePassword: true },
+          data: { emailVerified: true, mustChangePassword: true, approved: true },
         },
         headers: input.requestHeaders,
       });
       await prisma.user.update({
         where: { id: created.user.id },
-        data: { mustChangePassword: true, emailVerified: true, role },
+        data: { mustChangePassword: true, emailVerified: true, role, approved: true },
       });
     }
   } catch (error) {
@@ -105,8 +106,8 @@ export async function inviteStaff(input: {
   if (emailed) {
     return {
       success: resent
-        ? `New invite sent to ${email}. The previous password no longer works.`
-        : `Invite sent to ${email}. They must change the password after signing in.`,
+        ? `New invite sent to ${email}. The previous PIN no longer works.`
+        : `Invite sent to ${email}. They must change the PIN after signing in.`,
       emailed: true,
       resent,
     };
@@ -115,7 +116,7 @@ export async function inviteStaff(input: {
   const mail = getMailStatus();
   return {
     success: resent
-      ? `Password reset for ${email}. ${mailError || mail.message}`
+      ? `PIN reset for ${email}. ${mailError || mail.message}`
       : `Account created for ${email}. ${mailError || mail.message}`,
     emailed: false,
     resent,

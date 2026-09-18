@@ -22,10 +22,18 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
         <div className="p-6">
           <h1 className="text-2xl font-semibold">Staff sign in</h1>
           <p className="mt-2 text-sm text-muted">
-            Accounts are issued by an administrator. There is no public registration.
+            Counter and media desk accounts. Sign in with your work email and PIN — at least 4
+            characters, digits only or mixed. If authenticator is on, you will also enter a 6-digit
+            app code. New people can create an account; an administrator approves it and chooses the
+            role.
           </p>
           {banned ? (
             <p className="notice notice-error mt-4">This account has been disabled.</p>
+          ) : null}
+          {params.error === "pending" ? (
+            <p className="notice mt-4">
+              Your account is waiting for an administrator to approve it and assign a role.
+            </p>
           ) : null}
           <div className="mt-6">
             <LoginForm nextPath={nextPath.startsWith("/") ? nextPath : "/packages"} />

@@ -4,7 +4,6 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { JobStatus } from "@prisma/client";
-import { auth } from "@/lib/auth";
 import { sendJobCreatedEmail, sendReadyEmail, canSendEmail } from "@/lib/email";
 import { getPublicAppUrl } from "@/lib/env";
 import {
@@ -15,11 +14,18 @@ import {
   setJobStatus,
 } from "@/lib/jobs";
 import { createJobSchema, downloadLinkSchema } from "@/lib/validation";
+import { getSession, isApproved } from "@/lib/session";
 
 async function staffUser() {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getSession();
   if (!session?.user) {
     redirect("/login");
+  }
+  if (session.user.banned) {
+    redirect("/login?error=banned");
+  }
+  if (!isApproved(session)) {
+    redirect("/pending");
   }
   return session.user;
 }
@@ -40,6 +46,7 @@ export async function createJobAction(
     guestEmail: String(formData.get("guestEmail") || "").trim(),
     guestPhone: String(formData.get("guestPhone") || "").trim(),
     location: String(formData.get("location") || ""),
+    invoiceNumber: String(formData.get("invoiceNumber") || "").trim(),
   });
 
   if (!parsed.success) {

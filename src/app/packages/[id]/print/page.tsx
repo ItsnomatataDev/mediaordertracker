@@ -21,11 +21,13 @@ export default async function PrintReceiptPage({
     <div className="mx-auto max-w-xl">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3 print:hidden">
         <div>
-          <p className="text-sm text-muted">Print this for the guest. It is not a tax receipt.</p>
-          <h1 className="text-xl font-semibold">Media receipt</h1>
+          <p className="text-sm text-muted">
+            Media download slip only. Keep the purchase / tax receipt separate.
+          </p>
+          <h1 className="text-xl font-semibold">Print media receipt</h1>
         </div>
         <div className="flex gap-2">
-          <PrintButton />
+          <PrintButton label="Print media receipt" />
           <Link href={`/packages/${job.id}`} className="btn btn-ghost">
             Back
           </Link>
@@ -33,10 +35,12 @@ export default async function PrintReceiptPage({
       </div>
       <MediaReceipt
         qr={qr}
+        url={url}
         reference={job.reference}
         guestName={job.guestName}
         location={job.location}
-        url={url}
+        createdAt={job.createdAt}
+        invoiceNumber={job.invoiceNumber}
       />
     </div>
   );

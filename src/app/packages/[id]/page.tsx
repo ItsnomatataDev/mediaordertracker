@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ActivityLog } from "@/components/activity-log";
+import { PackagePhotos } from "@/components/package-photos";
 import { ProductionControls } from "@/components/production-controls";
 import { StatusBadge } from "@/components/status-badge";
 import { locationLabel } from "@/lib/constants";
@@ -24,7 +25,10 @@ export default async function PackageDetailPage({ params }: PageProps<"/packages
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="font-mono text-sm text-muted">{job.reference}</p>
+          <p className="font-mono text-sm text-muted">
+            {job.reference}
+            {job.invoiceNumber ? ` · Invoice ${job.invoiceNumber}` : ""}
+          </p>
           <div className="mt-1 flex flex-wrap items-center gap-3">
             <h1 className="text-3xl font-semibold">{job.guestName}</h1>
             <StatusBadge status={job.status} />
@@ -35,8 +39,8 @@ export default async function PackageDetailPage({ params }: PageProps<"/packages
             ) : null}
           </div>
           <p className="mt-2 text-muted">
-            {locationLabel(job.location)} · {formatAge(job.createdAt)} · created by{" "}
-            {job.createdBy.name}
+            {locationLabel(job.location)} · {formatDateTime(job.createdAt)} · {formatAge(job.createdAt)}{" "}
+            · created by {job.createdBy.name}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -65,6 +69,10 @@ export default async function PackageDetailPage({ params }: PageProps<"/packages
             <h2 className="text-lg font-semibold">Guest</h2>
             <dl className="mt-4 grid gap-4 sm:grid-cols-2 text-sm">
               <div>
+                <dt className="text-muted">Invoice / receipt</dt>
+                <dd className="mt-1 font-mono font-medium">{job.invoiceNumber || "—"}</dd>
+              </div>
+              <div>
                 <dt className="text-muted">WhatsApp</dt>
                 <dd className="mt-1 font-medium">{job.guestPhone || "—"}</dd>
               </div>
@@ -87,6 +95,17 @@ export default async function PackageDetailPage({ params }: PageProps<"/packages
                 </dd>
               </div>
             </dl>
+          </section>
+
+          <section className="border border-line bg-white p-5">
+            <h2 className="text-lg font-semibold">Buyer photos</h2>
+            <p className="mt-1 text-sm text-muted">
+              Take pictures here at the desk. They appear on the guest media package as soon as you
+              save them.
+            </p>
+            <div className="mt-4">
+              <PackagePhotos jobId={job.id} photos={job.photos} />
+            </div>
           </section>
 
           <section className="border border-line bg-white p-5">

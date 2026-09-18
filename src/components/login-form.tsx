@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { SecretField } from "@/components/secret-field";
 
 export function LoginForm({ nextPath }: { nextPath: string }) {
   const router = useRouter();
@@ -26,6 +28,7 @@ export function LoginForm({ nextPath }: { nextPath: string }) {
       });
       const data = (await response.json().catch(() => null)) as {
         message?: string;
+        twoFactorRedirect?: boolean;
       } | null;
 
       if (!response.ok) {
@@ -33,7 +36,13 @@ export function LoginForm({ nextPath }: { nextPath: string }) {
           setError("This copy of the site has no database. Sign in at http://167.233.21.108");
           return;
         }
-        setError(data?.message || "Invalid email or password");
+        setError(data?.message || "Invalid email or PIN");
+        return;
+      }
+
+      if (data?.twoFactorRedirect) {
+        const next = nextPath.startsWith("/") ? nextPath : "/packages";
+        router.push(`/login/2fa?next=${encodeURIComponent(next)}`);
         return;
       }
 
@@ -41,19 +50,24 @@ export function LoginForm({ nextPath }: { nextPath: string }) {
         credentials: "include",
       });
       const session = (await sessionRes.json().catch(() => null)) as {
-        user?: { mustChangePassword?: boolean };
+        user?: { mustChangePassword?: boolean; approved?: boolean };
       } | null;
 
       if (!session?.user) {
-        setError("Password is correct, but the session cookie was blocked. Use HTTPS, or the live IP while this host is still HTTP.");
+        setError(
+          "PIN is correct, but the session cookie was blocked. Use HTTPS, or the live IP while this host is still HTTP.",
+        );
         return;
       }
 
-      const destination = session?.user?.mustChangePassword
-        ? "/account?required=1"
-        : nextPath.startsWith("/")
-          ? nextPath
-          : "/packages";
+      const destination =
+        session.user.approved === false
+          ? "/pending"
+          : session.user.mustChangePassword
+            ? "/account?required=1"
+            : nextPath.startsWith("/")
+              ? nextPath
+              : "/packages";
       router.push(destination);
       router.refresh();
     } catch {
@@ -68,29 +82,25 @@ export function LoginForm({ nextPath }: { nextPath: string }) {
       <input type="hidden" name="next" value={nextPath} />
       <label className="block">
         <span className="mb-1.5 block text-sm font-medium">Work email</span>
-        <input
-          name="email"
-          type="email"
-          autoComplete="username"
-          required
-          className="field"
-        />
+        <input name="email" type="email" autoComplete="username" required className="field" />
       </label>
-      <label className="block">
-        <span className="mb-1.5 block text-sm font-medium">Password</span>
-        <input
-          name="password"
-          type="password"
-          autoComplete="current-password"
-          required
-          minLength={12}
-          className="field"
-        />
-      </label>
+      <SecretField
+        name="password"
+        label="PIN"
+        autoComplete="current-password"
+        mode="pin"
+        hint="At least 4 characters. Digits only is fine, or mix letters and numbers."
+      />
       {error ? <p className="notice notice-error">{error}</p> : null}
       <button type="submit" disabled={pending} className="btn btn-black w-full">
         {pending ? "Signing in…" : "Sign in"}
       </button>
+      <p className="text-center text-sm text-muted">
+        Need an account?{" "}
+        <Link href="/signup" className="font-medium text-orange">
+          Create account
+        </Link>
+      </p>
     </form>
   );
 }

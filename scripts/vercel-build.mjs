@@ -37,7 +37,10 @@ if (!process.env.DATABASE_URL) {
   if (migrate !== 0) {
     console.warn("prisma migrate deploy failed; continuing so the new login can ship.");
   } else {
-    run("node", ["prisma/seed.mjs"]);
+    const seed = run("node", ["prisma/seed.mjs"]);
+    if (seed !== 0) {
+      process.exit(seed);
+    }
   }
 }
 

@@ -17,8 +17,8 @@ async function main() {
   const password = required("BOOTSTRAP_ADMIN_PASSWORD");
   const name = process.env.BOOTSTRAP_ADMIN_NAME || "Thando";
 
-  if (password.length < 12) {
-    throw new Error("BOOTSTRAP_ADMIN_PASSWORD must be at least 12 characters");
+  if (password.length < 4) {
+    throw new Error("BOOTSTRAP_ADMIN_PASSWORD must be at least 4 characters");
   }
 
   const hashed = await hashPassword(password);
@@ -40,6 +40,7 @@ async function main() {
         email,
         emailVerified: true,
         role: "admin",
+        approved: true,
         createdAt: now,
         updatedAt: now,
       },
@@ -53,6 +54,7 @@ async function main() {
         name,
         role: "admin",
         emailVerified: true,
+        approved: true,
         updatedAt: now,
       },
     });

@@ -177,23 +177,76 @@ export async function sendStaffInviteEmail(input: {
       `You have been invited as ${roleLabel} on the IT's No Matata media portal.`,
       `Sign in: ${loginUrl}`,
       `Email: ${input.to}`,
-      `Temporary password: ${input.password}`,
+      `Temporary PIN: ${input.password}`,
       "",
-      "Change this password after you sign in.",
+      "Change this PIN after you sign in, then add an authenticator app.",
       "",
       "IT's No Matata",
     ].join("\n"),
     html: brandedHtml({
-      preheader: "Your media portal login is ready. Change the password after you sign in.",
+      preheader: "Your media portal login is ready. Change the PIN after you sign in.",
       heading: `Hi ${input.name}`,
       body: `<p style="margin:0 0 12px;font-size:15px;line-height:1.55;color:#0a0a0a;">You have been invited as <strong>${roleLabel}</strong> on the IT's No Matata media portal.</p>
              <p style="margin:0 0 12px;font-size:15px;line-height:1.55;color:#0a0a0a;">Sign in with <strong>${escapeHtml(input.to)}</strong></p>
-             <p style="margin:0 0 12px;font-size:15px;line-height:1.55;color:#0a0a0a;">Temporary password:</p>
-             <p style="margin:0;padding:12px 14px;background:#fafafa;border:1px solid #e5e5e5;font-family:ui-monospace,Menlo,monospace;font-size:16px;letter-spacing:0.04em;color:#0a0a0a;">${escapeHtml(input.password)}</p>
-             <p style="margin:16px 0 0;font-size:15px;line-height:1.55;color:#0a0a0a;">Change this password as soon as you sign in.</p>`,
+             <p style="margin:0 0 12px;font-size:15px;line-height:1.55;color:#0a0a0a;">Temporary PIN:</p>
+             <p style="margin:0;padding:12px 14px;background:#fafafa;border:1px solid #e5e5e5;font-family:ui-monospace,Menlo,monospace;font-size:22px;letter-spacing:0.28em;color:#0a0a0a;">${escapeHtml(input.password)}</p>
+             <p style="margin:16px 0 0;font-size:15px;line-height:1.55;color:#0a0a0a;">Change this PIN as soon as you sign in, then add an authenticator app on Account.</p>`,
       ctaLabel: "Sign in to the portal",
       ctaUrl: loginUrl,
-      footnote: "This account cannot be created from the public internet. Only an administrator can invite staff.",
+      footnote: "An administrator invited this account. Staff cannot choose their own role.",
+    }),
+  });
+}
+
+export async function sendSignupRequestEmail(input: {
+  to: string;
+  name: string;
+  email: string;
+  staffUrl: string;
+}) {
+  await send({
+    to: input.to,
+    subject: `${input.name} requested a media portal account`,
+    text: [
+      `${input.name} (${input.email}) asked for access to the media portal.`,
+      "Approve them and choose Staff or Admin. They cannot pick a role themselves.",
+      input.staffUrl,
+    ].join("\n"),
+    html: brandedHtml({
+      preheader: "A new staff account is waiting for your approval.",
+      heading: "New account request",
+      body: `<p style="margin:0 0 12px;font-size:15px;line-height:1.55;color:#0a0a0a;"><strong>${escapeHtml(input.name)}</strong> asked for access to the media portal.</p>
+             <p style="margin:0;font-size:15px;line-height:1.55;color:#0a0a0a;">Email: <strong>${escapeHtml(input.email)}</strong>. Approve them and choose Staff or Admin. They cannot pick a role themselves.</p>`,
+      ctaLabel: "Review requests",
+      ctaUrl: input.staffUrl,
+    }),
+  });
+}
+
+export async function sendAccountApprovedEmail(input: {
+  to: string;
+  name: string;
+  role: "staff" | "admin";
+  loginUrl: string;
+}) {
+  const roleLabel = input.role === "admin" ? "administrator" : "staff";
+  await send({
+    to: input.to,
+    subject: "Your IT's No Matata media portal account is approved",
+    text: [
+      `Hi ${input.name},`,
+      "",
+      `An administrator approved your account as ${roleLabel}.`,
+      `Sign in: ${input.loginUrl}`,
+      "",
+      "IT's No Matata",
+    ].join("\n"),
+    html: brandedHtml({
+      preheader: "Your media portal account is approved. You can sign in now.",
+      heading: `Hi ${input.name}`,
+      body: `<p style="margin:0;font-size:15px;line-height:1.55;color:#0a0a0a;">An administrator approved your account as <strong>${roleLabel}</strong>. You can sign in and use the portal with clients.</p>`,
+      ctaLabel: "Sign in to the portal",
+      ctaUrl: input.loginUrl,
     }),
   });
 }

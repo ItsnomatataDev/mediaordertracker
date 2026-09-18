@@ -13,11 +13,30 @@ export function harareDateKey(date = new Date()) {
   return `${value("year")}${value("month")}${value("day")}`;
 }
 
+export function formatDate(date: Date) {
+  return new Intl.DateTimeFormat("en-GB", {
+    timeZone: TIMEZONE,
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }).format(date);
+}
+
 export function formatDateTime(date: Date) {
   return new Intl.DateTimeFormat("en-GB", {
     timeZone: TIMEZONE,
     day: "2-digit",
     month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(date);
+}
+
+export function formatTime(date: Date) {
+  return new Intl.DateTimeFormat("en-GB", {
+    timeZone: TIMEZONE,
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
@@ -67,4 +86,26 @@ export function whatsappHref(phone: string, text?: string) {
 
 export function jobPublicPath(publicToken: string) {
   return `/m/${publicToken}`;
+}
+
+export function harareDateBounds(isoDate: string) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(isoDate)) return null;
+  const start = new Date(`${isoDate}T00:00:00+02:00`);
+  if (Number.isNaN(start.getTime())) return null;
+  return {
+    start,
+    end: new Date(start.getTime() + 24 * 60 * 60 * 1000),
+  };
+}
+
+export function harareInputDate(date = new Date()) {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: TIMEZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(date);
+  const value = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((part) => part.type === type)?.value ?? "";
+  return `${value("year")}-${value("month")}-${value("day")}`;
 }

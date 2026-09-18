@@ -129,4 +129,10 @@ button {
   a[href]::after {
     content: none !important;
   }
+
+  .print-slip {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    max-width: none !important;
+  }
 }

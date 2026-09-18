@@ -22,6 +22,16 @@ export function CreateJobForm() {
         </select>
       </label>
       <label className="block">
+        <span className="mb-1.5 block text-sm font-medium">Invoice / receipt number</span>
+        <input
+          name="invoiceNumber"
+          required
+          autoComplete="off"
+          placeholder="Till or ZIMRA receipt number"
+          className="field"
+        />
+      </label>
+      <label className="block">
         <span className="mb-1.5 block text-sm font-medium">Guest name</span>
         <input name="guestName" required autoComplete="name" className="field" />
       </label>

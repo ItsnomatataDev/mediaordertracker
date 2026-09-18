@@ -13,7 +13,7 @@ export function StaffHeader({
 }) {
   return (
     <header className="print:hidden border-b border-black bg-black text-white">
-      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3">
+      <div className="mx-auto flex max-w-[92rem] flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
         <Link href="/packages" className="block">
           <Wordmark className="h-14 w-auto" priority />
         </Link>

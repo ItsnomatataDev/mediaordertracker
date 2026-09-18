@@ -20,8 +20,11 @@ model User {
   banReason     String?
   banExpires    DateTime?
   mustChangePassword Boolean @default(false)
+  approved      Boolean   @default(false)
+  twoFactorEnabled Boolean @default(false)
   sessions      Session[]
   accounts      Account[]
+  twofactors    TwoFactor[]
   jobs          Job[]
   events        JobEvent[]
 
@@ -78,6 +81,21 @@ model Verification {
   @@map("verification")
 }
 
+model TwoFactor {
+  id                      String    @id
+  secret                  String
+  backupCodes             String
+  userId                  String
+  user                    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  verified                Boolean?  @default(true)
+  failedVerificationCount Int?      @default(0)
+  lockedUntil             DateTime?
+
+  @@index([secret])
+  @@index([userId])
+  @@map("twoFactor")
+}
+
 enum JobStatus {
   NEW
   EDITING
@@ -95,6 +113,8 @@ enum JobEventType {
   MARKED_READY
   EMAIL_SENT
   DOWNLOAD_CLICKED
+  PHOTO_ADDED
+  PHOTO_REMOVED
 }
 
 model DailySequence {
@@ -127,7 +147,9 @@ model Job {
   portalClickCount   Int         @default(0)
   downloadClickCount Int         @default(0)
   notifiedAt         DateTime?
+  invoiceNumber      String?
   events             JobEvent[]
+  photos             JobPhoto[]
 
   @@index([status])
   @@index([location])
@@ -135,6 +157,18 @@ model Job {
   @@index([guestEmail])
   @@index([guestPhone])
   @@index([guestName])
+  @@index([invoiceNumber])
+}
+
+model JobPhoto {
+  id        String   @id @default(cuid())
+  jobId     String
+  job       Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  mimeType  String
+  data      Bytes
+  createdAt DateTime @default(now())
+
+  @@index([jobId])
 }
 
 model JobEvent {

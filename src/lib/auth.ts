@@ -1,7 +1,7 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { nextCookies } from "better-auth/next-js";
-import { admin } from "better-auth/plugins";
+import { admin, twoFactor } from "better-auth/plugins";
 import { prisma } from "@/lib/prisma";
 import { getAppUrl, getAuthSecret, getTrustedOrigins, useSecureAuthCookies } from "@/lib/env";
 
@@ -22,12 +22,19 @@ export const auth = betterAuth({
         input: false,
         returned: true,
       },
+      approved: {
+        type: "boolean",
+        required: false,
+        defaultValue: false,
+        input: false,
+        returned: true,
+      },
     },
   },
   emailAndPassword: {
     enabled: true,
     disableSignUp: true,
-    minPasswordLength: 12,
+    minPasswordLength: 4,
     maxPasswordLength: 128,
     requireEmailVerification: false,
   },
@@ -60,6 +67,10 @@ export const auth = betterAuth({
     admin({
       defaultRole: "user",
       adminRoles: ["admin"],
+    }),
+    twoFactor({
+      issuer: "IT's No Matata",
+      skipVerificationOnEnable: false,
     }),
     nextCookies(),
   ],

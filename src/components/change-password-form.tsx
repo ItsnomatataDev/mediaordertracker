@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { SecretField } from "@/components/secret-field";
 
 export function ChangePasswordForm({ required }: { required?: boolean }) {
   const router = useRouter();
@@ -35,7 +36,7 @@ export function ChangePasswordForm({ required }: { required?: boolean }) {
       } | null;
 
       if (!response.ok) {
-        setError(result?.error || "Could not change password");
+        setError(result?.error || "Could not change PIN");
         return;
       }
 
@@ -45,11 +46,11 @@ export function ChangePasswordForm({ required }: { required?: boolean }) {
         return;
       }
 
-      setSuccess(result?.success || "Password updated.");
+      setSuccess(result?.success || "PIN updated.");
       form.reset();
       router.refresh();
     } catch {
-      setError("Could not change password. Try again.");
+      setError("Could not change PIN. Try again.");
     } finally {
       setPending(false);
     }
@@ -57,45 +58,30 @@ export function ChangePasswordForm({ required }: { required?: boolean }) {
 
   return (
     <form onSubmit={onSubmit} className="max-w-lg space-y-4">
-      <label className="block">
-        <span className="mb-1.5 block text-sm font-medium">Current password</span>
-        <input
-          name="currentPassword"
-          type="password"
-          required
-          autoComplete="current-password"
-          className="field"
-        />
-      </label>
-      <label className="block">
-        <span className="mb-1.5 block text-sm font-medium">New password</span>
-        <input
-          name="newPassword"
-          type="password"
-          required
-          minLength={12}
-          autoComplete="new-password"
-          className="field"
-        />
-        <span className="mt-1 block text-xs text-muted">
-          At least 12 characters, with a letter and a number.
-        </span>
-      </label>
-      <label className="block">
-        <span className="mb-1.5 block text-sm font-medium">Confirm new password</span>
-        <input
-          name="confirmPassword"
-          type="password"
-          required
-          minLength={12}
-          autoComplete="new-password"
-          className="field"
-        />
-      </label>
+      <SecretField
+        name="currentPassword"
+        label="Current PIN"
+        autoComplete="current-password"
+        mode="secret"
+        hint="Enter the PIN you use now."
+      />
+      <SecretField
+        name="newPassword"
+        label="New PIN"
+        autoComplete="new-password"
+        mode="pin"
+        hint="At least 4 characters. Digits only is fine, or mix letters and numbers."
+      />
+      <SecretField
+        name="confirmPassword"
+        label="Confirm new PIN"
+        autoComplete="new-password"
+        mode="pin"
+      />
       {error ? <p className="notice notice-error">{error}</p> : null}
       {success ? <p className="notice">{success}</p> : null}
       <button type="submit" disabled={pending} className="btn btn-black">
-        {pending ? "Saving…" : required ? "Set my password" : "Update password"}
+        {pending ? "Saving…" : required ? "Set my PIN" : "Update PIN"}
       </button>
     </form>
   );

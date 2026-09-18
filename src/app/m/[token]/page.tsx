@@ -5,7 +5,7 @@ import { GuestDetailsForm } from "@/components/guest-details-form";
 import { Wordmark } from "@/components/wordmark";
 import { clientIp, parseAccessSource } from "@/lib/device";
 import { getSupportEmail, getSupportWhatsApp } from "@/lib/env";
-import { customerStatus, customerStatusLabel, whatsappHref } from "@/lib/format";
+import { customerStatus, customerStatusLabel, formatDate, whatsappHref } from "@/lib/format";
 import { getJobByToken, recordPackageAccess } from "@/lib/jobs";
 import { getSession } from "@/lib/session";
 
@@ -62,8 +62,30 @@ export default async function CustomerPage({
             : "Your photos and video are being prepared. Keep this page. Your media will appear here automatically, usually within 24 hours."}
         </p>
         <p className="mt-3 font-mono text-sm">Package: {job.reference}</p>
+        {job.invoiceNumber ? (
+          <p className="mt-1 font-mono text-sm text-muted">Invoice {job.invoiceNumber}</p>
+        ) : null}
+        <p className="mt-1 text-sm text-muted">{formatDate(job.createdAt)}</p>
         {query.confirmed === "1" ? (
           <p className="notice mt-4">Details saved. You can leave the counter.</p>
+        ) : null}
+
+        {job.photos.length ? (
+          <section className="mt-8">
+            <h2 className="text-lg font-semibold">Your photos</h2>
+            <p className="mt-1 text-sm text-muted">Taken at the desk for this package.</p>
+            <ul className="mt-4 grid grid-cols-2 gap-3">
+              {job.photos.map((photo) => (
+                <li key={photo.id} className="border border-line">
+                  <img
+                    src={`/api/photos/${photo.id}?token=${job.publicToken}`}
+                    alt="Your photo"
+                    className="aspect-square w-full object-cover"
+                  />
+                </li>
+              ))}
+            </ul>
+          </section>
         ) : null}
 
         {status === "READY" ? (

@@ -1,7 +1,10 @@
 import { redirect } from "next/navigation";
-import { getSession } from "@/lib/session";
+import { getSession, isApproved } from "@/lib/session";
 
 export default async function HomePage() {
   const session = await getSession();
-  redirect(session?.user ? "/packages" : "/login");
+  if (!session?.user) {
+    redirect("/login");
+  }
+  redirect(isApproved(session) ? "/packages" : "/pending");
 }
