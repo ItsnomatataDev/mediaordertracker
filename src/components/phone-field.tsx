@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -15,47 +16,70 @@ export function PhoneField({
   rememberCountry?: boolean;
 }) {
   const parsed = splitPhone(defaultValue);
-  const [country, setCountry] = useState(parsed.country || DEFAULT_PHONE_COUNTRY);
+  const [country, setCountry] = useState(
+    parsed.country || DEFAULT_PHONE_COUNTRY
+  );
 
   useEffect(() => {
     if (!rememberCountry || defaultValue) return;
+
     const saved = window.localStorage.getItem(LAST_COUNTRY_KEY);
-    if (saved && PHONE_COUNTRIES.some((item) => item.code === saved)) {
+
+    if (
+      saved &&
+      PHONE_COUNTRIES.some((item) => item.code === saved)
+    ) {
       setCountry(saved);
     }
   }, [defaultValue, rememberCountry]);
 
   return (
     <label className="block">
-      <span className="mb-1.5 block text-sm font-medium">{label}</span>
-      <div className="flex gap-2">
+      <span className="mb-1.5 block text-sm font-medium">
+        {label}
+      </span>
+
+      <div className="flex w-full gap-2">
+        {/* Country code */}
         <select
           name="phoneCountry"
           value={country}
           onChange={(event) => {
-            setCountry(event.target.value);
+            const value = event.target.value;
+
+            setCountry(value);
+
             if (rememberCountry) {
-              window.localStorage.setItem(LAST_COUNTRY_KEY, event.target.value);
+              window.localStorage.setItem(
+                LAST_COUNTRY_KEY,
+                value
+              );
             }
           }}
-          className=""
+          className="field w-[7rem] shrink-0"
           aria-label="Country code"
         >
           {PHONE_COUNTRIES.map((item) => (
-            <option key={`${item.iso}-${item.code}`} value={item.code}>
+            <option
+              key={`${item.iso}-${item.code}`}
+              value={item.code}
+            >
               {item.iso} +{item.code}
             </option>
           ))}
         </select>
+
+        {/* Phone number */}
         <input
           name="phoneNational"
           defaultValue={parsed.national}
           inputMode="tel"
           autoComplete="tel-national"
           placeholder="77 123 4567"
-          className="field  w-[5rem] shrink-2"
+          className="field min-w-0 flex-1"
         />
       </div>
     </label>
   );
 }
+
