@@ -111,14 +111,15 @@ export default async function PackageDetailPage({ params }: PageProps<"/packages
           <section className="border border-line bg-white p-5">
             <h2 className="text-lg font-semibold">Delivery</h2>
             <p className="mt-1 text-sm text-muted">
-              Paste the WeTransfer link. Guests never see a new URL — they stay on this package and
-              Download sends them to WeTransfer.
+            Save invoice and WeTransfer separately. Ready (blue) happens when both are in — the guest
+            is emailed automatically. After they scan and confirm, it turns Done (green).
             </p>
             <div className="mt-4">
               <ProductionControls
                 jobId={job.id}
                 status={job.status}
                 weTransferUrl={job.weTransferUrl}
+                invoiceNumber={job.invoiceNumber}
                 guestEmail={job.guestEmail}
                 guestPhone={job.guestPhone}
                 whatsappHref={guestWhatsapp}

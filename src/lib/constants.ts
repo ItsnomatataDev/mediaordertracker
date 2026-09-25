@@ -19,7 +19,7 @@ export function locationLabel(code: string) {
 export const TIMEZONE = "Africa/Harare";
 export const READY_SLA_HOURS = 24;
 
-export const STAFF_STATUSES = ["NEW", "EDITING", "UPLOADING", "READY"] as const;
+export const STAFF_STATUSES = ["NEW", "EDITING", "UPLOADING", "READY", "DONE"] as const;
 
 export type StaffStatus = (typeof STAFF_STATUSES)[number];
 

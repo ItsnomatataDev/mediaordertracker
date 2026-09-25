@@ -56,21 +56,39 @@ export function formatAge(from: Date, now = new Date()) {
 }
 
 export function isOverdue(createdAt: Date, status: JobStatus, now = new Date()) {
-  if (status === "READY") return false;
+  if (status === "READY" || status === "DONE") return false;
   return now.getTime() - createdAt.getTime() > READY_SLA_HOURS * 60 * 60 * 1000;
 }
 
-export function customerStatus(status: JobStatus) {
-  if (status === "READY") return "READY";
-  if (status === "UPLOADING") return "UPLOADING";
-  return "PROCESSING";
+export type GuestViewStatus = "HELD" | "READY" | "DONE";
+
+export function guestViewStatus(job: {
+  status: JobStatus;
+  weTransferUrl?: string | null;
+  invoiceNumber?: string | null;
+}): GuestViewStatus {
+  if (job.status === "DONE") return "DONE";
+  if (job.status === "READY" || (job.weTransferUrl && job.invoiceNumber)) return "READY";
+  return "HELD";
 }
 
-export function customerStatusLabel(status: JobStatus) {
-  const value = customerStatus(status);
-  if (value === "READY") return "Ready to download";
-  if (value === "UPLOADING") return "Uploading";
-  return "Processing";
+export function guestViewStatusLabel(status: GuestViewStatus) {
+  if (status === "DONE") return "Done";
+  if (status === "READY") return "Ready to download";
+  return "Held for you";
+}
+
+export function isMediaAvailable(status: JobStatus) {
+  return status === "READY" || status === "DONE";
+}
+
+export function formatWhatsAppDisplay(phone: string) {
+  const digits = digitsOnly(phone);
+  if (!digits) return "";
+  if (digits.startsWith("263") && digits.length >= 11) {
+    return `+${digits.slice(0, 3)} ${digits.slice(3, 5)} ${digits.slice(5, 8)} ${digits.slice(8)}`;
+  }
+  return digits.startsWith("+") ? digits : `+${digits}`;
 }
 
 export function digitsOnly(value: string) {

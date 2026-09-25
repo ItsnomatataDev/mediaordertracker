@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Autoprint } from "@/components/autoprint";
 import { MediaReceipt } from "@/components/media-receipt";
 import { PrintButton } from "@/components/print-button";
 import { getJobById, publicJobUrl } from "@/lib/jobs";
@@ -18,7 +19,8 @@ export default async function PrintReceiptPage({
   const qr = await qrDataUrl(url);
 
   return (
-    <div className="mx-auto max-w-xl">
+    <div className="mx-auto max-w-xl print:mx-0 print:max-w-none">
+      <Autoprint />
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3 print:hidden">
         <div>
           <p className="text-sm text-muted">

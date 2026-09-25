@@ -9,6 +9,8 @@
   --muted: #5c5c5c;
   --line: #e5e5e5;
   --surface: #fafafa;
+  --ready: #1d4ed8;
+  --done: #15803d;
 }
 
 @theme inline {
@@ -20,6 +22,8 @@
   --color-muted: var(--muted);
   --color-line: var(--line);
   --color-surface: var(--surface);
+  --color-ready: var(--ready);
+  --color-done: var(--done);
   --font-sans: var(--font-poppins);
 }
 
@@ -122,8 +126,28 @@ button {
 }
 
 @media print {
+  @page {
+    size: 80mm auto;
+    margin: 2mm;
+  }
+
+  html,
   body {
+    min-height: 0 !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
     background: #ffffff !important;
+    overflow: visible !important;
+  }
+
+  header,
+  nav,
+  .notice,
+  .print\:hidden,
+  button,
+  a.btn {
+    display: none !important;
   }
 
   a[href]::after {
@@ -131,8 +155,25 @@ button {
   }
 
   .print-slip {
-    break-inside: avoid;
+    width: 76mm !important;
+    max-width: 76mm !important;
+    margin: 0 auto !important;
+    border: 0 !important;
+    box-shadow: none !important;
     page-break-inside: avoid;
-    max-width: none !important;
+    break-inside: avoid;
+  }
+
+  .print-logo {
+    height: 10mm !important;
+    width: 10mm !important;
+    max-height: 10mm !important;
+  }
+
+  .print-qr {
+    width: 42mm !important;
+    height: 42mm !important;
+    max-width: 42mm !important;
+    max-height: 42mm !important;
   }
 }

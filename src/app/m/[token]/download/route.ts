@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { clientIp } from "@/lib/device";
 import { getAppUrl } from "@/lib/env";
+import { isMediaAvailable } from "@/lib/format";
 import { getJobByToken, recordDownloadClick } from "@/lib/jobs";
 
 export async function GET(
@@ -9,7 +10,7 @@ export async function GET(
 ) {
   const { token } = await context.params;
   const job = await getJobByToken(token);
-  if (!job || job.status !== "READY" || !job.weTransferUrl) {
+  if (!job || !isMediaAvailable(job.status) || !job.weTransferUrl) {
     return NextResponse.redirect(new URL(`/m/${token}`, getAppUrl()));
   }
 

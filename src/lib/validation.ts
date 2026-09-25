@@ -18,7 +18,7 @@ export const createJobSchema = z
     guestEmail: z.union([z.email("Enter a valid email"), z.literal("")]),
     guestPhone: z.string().trim().max(24),
     location: z.enum(LOCATION_CODES),
-    invoiceNumber: z.string().trim().min(1, "Invoice / receipt number is required").max(40),
+    invoiceNumber: z.string().trim().max(40),
   })
   .refine((value) => value.guestEmail || value.guestPhone.trim().length >= 7, {
     message: "Add an email or WhatsApp number",
@@ -41,6 +41,25 @@ export const downloadLinkSchema = z
   .trim()
   .url("Paste a full https link")
   .refine((value) => value.startsWith("https://"), "Use an https link");
+
+export const invoiceNumberSchema = z
+  .string()
+  .trim()
+  .min(1, "Invoice / receipt number is required")
+  .max(40);
+
+export const saveInvoiceSchema = z.object({
+  invoiceNumber: invoiceNumberSchema,
+});
+
+export const saveLinkSchema = z.object({
+  weTransferUrl: downloadLinkSchema,
+});
+
+export const markReadySchema = z.object({
+  weTransferUrl: downloadLinkSchema,
+  invoiceNumber: invoiceNumberSchema,
+});
 
 export const createStaffSchema = z.object({
   name: z.string().trim().min(2).max(80),

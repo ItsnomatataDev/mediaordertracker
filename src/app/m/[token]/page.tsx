@@ -5,7 +5,14 @@ import { GuestDetailsForm } from "@/components/guest-details-form";
 import { Wordmark } from "@/components/wordmark";
 import { clientIp, parseAccessSource } from "@/lib/device";
 import { getSupportEmail, getSupportWhatsApp } from "@/lib/env";
-import { customerStatus, customerStatusLabel, formatDate, whatsappHref } from "@/lib/format";
+import {
+  formatDate,
+  formatWhatsAppDisplay,
+  guestViewStatus,
+  guestViewStatusLabel,
+  isMediaAvailable,
+  whatsappHref,
+} from "@/lib/format";
 import { getJobByToken, recordPackageAccess } from "@/lib/jobs";
 import { getSession } from "@/lib/session";
 
@@ -32,11 +39,19 @@ export default async function CustomerPage({
     ip: clientIp(headerList),
     isStaff: Boolean(session?.user),
   });
+  const current = (await getJobByToken(token)) ?? job;
 
-  const status = customerStatus(job.status);
+  const status = guestViewStatus(current);
   const supportWhatsApp = getSupportWhatsApp();
+  const supportWhatsAppLabel = supportWhatsApp ? formatWhatsAppDisplay(supportWhatsApp) : "";
   const supportEmail = getSupportEmail();
-  const supportText = `Hi, I need help with my media package ${job.reference}`;
+  const supportText = `Hi, I need help with my media package ${current.reference}`;
+  const badgeClass =
+    status === "DONE"
+      ? "border-done bg-done text-white"
+      : status === "READY"
+        ? "border-ready bg-ready text-white"
+        : "border-orange bg-orange-soft text-orange";
 
   return (
     <main className="min-h-full bg-white text-black">
@@ -48,37 +63,39 @@ export default async function CustomerPage({
           Media package
         </p>
         <h1 className="mt-2 text-3xl font-semibold leading-tight">Your Victoria Falls flight media</h1>
-        <p
-          className={`badge mt-4 w-fit border px-2 py-0.5 text-[11px] font-semibold uppercase ${
-            status === "READY" ? "border-orange bg-orange text-white" : "border-black text-black"
-          }`}
-        >
-          {customerStatusLabel(job.status)}
+        <p className={`badge mt-4 w-fit border px-2 py-0.5 text-[11px] font-semibold uppercase ${badgeClass}`}>
+          {guestViewStatusLabel(status)}
         </p>
         <p className="mt-6 text-base leading-relaxed text-muted">
-          Hi {job.guestName}.{" "}
-          {status === "READY"
-            ? "Your photos and video are ready. Download opens WeTransfer from this same package — the link never changes."
-            : "Your photos and video are being prepared. Keep this page. Your media will appear here automatically, usually within 24 hours."}
+          Hi {current.guestName}.{" "}
+          {status === "DONE"
+            ? "This package is done. Download is still here if you need the files again."
+            : status === "READY"
+              ? "Your photos and video are ready. Download opens WeTransfer from this same package — the link never changes."
+              : "We've opened your personal media package and the desk has you on file. Photos and video are being finished now. They appear on this same page, usually within 24 hours — bookmark it so you do not lose it."}
         </p>
-        <p className="mt-3 font-mono text-sm">Package: {job.reference}</p>
-        {job.invoiceNumber ? (
-          <p className="mt-1 font-mono text-sm text-muted">Invoice {job.invoiceNumber}</p>
+        <p className="mt-3 font-mono text-sm">Package: {current.reference}</p>
+        {current.invoiceNumber ? (
+          <p className="mt-1 font-mono text-sm text-muted">Invoice {current.invoiceNumber}</p>
         ) : null}
-        <p className="mt-1 text-sm text-muted">{formatDate(job.createdAt)}</p>
+        <p className="mt-1 text-sm text-muted">{formatDate(current.createdAt)}</p>
         {query.confirmed === "1" ? (
-          <p className="notice mt-4">Details saved. You can leave the counter.</p>
+          <p className="notice mt-4">
+            {status === "DONE"
+              ? "Details confirmed. The desk can see this package is done."
+              : "Details saved. You can leave the counter."}
+          </p>
         ) : null}
 
-        {job.photos.length ? (
+        {current.photos.length ? (
           <section className="mt-8">
             <h2 className="text-lg font-semibold">Your photos</h2>
             <p className="mt-1 text-sm text-muted">Taken at the desk for this package.</p>
             <ul className="mt-4 grid grid-cols-2 gap-3">
-              {job.photos.map((photo) => (
+              {current.photos.map((photo) => (
                 <li key={photo.id} className="border border-line">
                   <img
-                    src={`/api/photos/${photo.id}?token=${job.publicToken}`}
+                    src={`/api/photos/${photo.id}?token=${current.publicToken}`}
                     alt="Your photo"
                     className="aspect-square w-full object-cover"
                   />
@@ -88,15 +105,21 @@ export default async function CustomerPage({
           </section>
         ) : null}
 
-        {status === "READY" ? (
-          <a href={`/m/${job.publicToken}/download`} className="btn btn-primary mt-8 py-4 text-base">
+        {isMediaAvailable(current.status) ? (
+          <a href={`/m/${current.publicToken}/download`} className="btn btn-primary mt-8 py-4 text-base">
             Download my media
           </a>
         ) : (
           <div className="notice mt-8">
-            Do not scan the QR on your tax receipt. Bookmark this media package or leave it open.
+            This QR is your media package only. Do not scan the code on your tax receipt.
           </div>
         )}
+
+        {status === "READY" && !current.detailsConfirmedAt ? (
+          <p className="notice mt-4">
+            Confirm your details below so the desk can mark this package done.
+          </p>
+        ) : null}
 
         <section className="mt-10 border border-line p-4">
           <h2 className="text-lg font-semibold">Your contact details</h2>
@@ -105,28 +128,31 @@ export default async function CustomerPage({
           </p>
           <div className="mt-4">
             <GuestDetailsForm
-              token={job.publicToken}
-              name={job.guestName}
-              email={job.guestEmail || ""}
-              phone={job.guestPhone || ""}
-              confirmed={Boolean(job.detailsConfirmedAt)}
+              token={current.publicToken}
+              name={current.guestName}
+              email={current.guestEmail || ""}
+              phone={current.guestPhone || ""}
+              confirmed={Boolean(current.detailsConfirmedAt)}
             />
           </div>
         </section>
 
-        <section className="mt-8 space-y-3">
+        <section className="mt-8 space-y-2">
           <h2 className="text-lg font-semibold">Media support</h2>
-          {supportWhatsApp ? (
-            <a href={whatsappHref(supportWhatsApp, supportText)} className="btn btn-black w-full">
-              Message the media team
-            </a>
-          ) : null}
           {supportEmail ? (
             <a
-              href={`mailto:${supportEmail}?subject=${encodeURIComponent(job.reference)}`}
+              href={`mailto:${supportEmail}?subject=${encodeURIComponent(current.reference)}`}
               className="block text-center text-sm text-muted underline"
             >
               {supportEmail}
+            </a>
+          ) : null}
+          {supportWhatsApp ? (
+            <a
+              href={whatsappHref(supportWhatsApp, supportText)}
+              className="block text-center text-sm text-muted underline"
+            >
+              WhatsApp {supportWhatsAppLabel}
             </a>
           ) : null}
         </section>

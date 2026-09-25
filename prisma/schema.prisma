@@ -101,6 +101,7 @@ enum JobStatus {
   EDITING
   UPLOADING
   READY
+  DONE
 }
 
 enum JobEventType {
@@ -111,6 +112,7 @@ enum JobEventType {
   STATUS_CHANGED
   LINK_ADDED
   MARKED_READY
+  MARKED_DONE
   EMAIL_SENT
   DOWNLOAD_CLICKED
   PHOTO_ADDED
@@ -141,6 +143,7 @@ model Job {
   createdAt          DateTime    @default(now())
   updatedAt          DateTime    @updatedAt
   readyAt            DateTime?
+  completedAt        DateTime?
   lastViewedAt       DateTime?
   viewCount          Int         @default(0)
   qrScanCount        Int         @default(0)

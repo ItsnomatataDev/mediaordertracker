@@ -1,7 +1,13 @@
 "use client";
 
 import { useActionState } from "react";
-import { markReadyAction, notifyGuestAction, updateStatusAction, type JobFormState } from "@/app/actions/jobs";
+import {
+  notifyGuestAction,
+  saveInvoiceAction,
+  saveLinkAction,
+  updateStatusAction,
+  type JobFormState,
+} from "@/app/actions/jobs";
 import type { JobStatus } from "@prisma/client";
 
 const initial: JobFormState = {};
@@ -10,6 +16,7 @@ export function ProductionControls({
   jobId,
   status,
   weTransferUrl,
+  invoiceNumber,
   guestEmail,
   guestPhone,
   whatsappHref,
@@ -18,15 +25,20 @@ export function ProductionControls({
   jobId: string;
   status: JobStatus;
   weTransferUrl: string | null;
+  invoiceNumber: string | null;
   guestEmail: string | null;
   guestPhone: string | null;
   whatsappHref: string | null;
   notifiedAt: string | null;
 }) {
-  const boundReady = markReadyAction.bind(null, jobId);
+  const boundInvoice = saveInvoiceAction.bind(null, jobId);
+  const boundLink = saveLinkAction.bind(null, jobId);
   const boundNotify = notifyGuestAction.bind(null, jobId);
-  const [readyState, readyAction, readyPending] = useActionState(boundReady, initial);
+  const [invoiceState, invoiceAction, invoicePending] = useActionState(boundInvoice, initial);
+  const [linkState, linkAction, linkPending] = useActionState(boundLink, initial);
   const [notifyState, notifyAction, notifyPending] = useActionState(boundNotify, initial);
+  const locked = status === "READY" || status === "DONE";
+  const canReady = Boolean(invoiceNumber && weTransferUrl);
 
   return (
     <div className="space-y-6">
@@ -40,48 +52,86 @@ export function ProductionControls({
                   status === value ? "bg-black text-white" : "btn-ghost border"
                 }`}
                 type="submit"
-                disabled={status === "READY"}
+                disabled={locked}
               >
                 {value}
               </button>
             </form>
           ))}
         </div>
+        {status === "READY" ? (
+          <p className="mt-2 text-sm text-ready">
+            Ready — waiting for the guest to scan and confirm. They were emailed if we have an
+            address.
+          </p>
+        ) : null}
+        {status === "DONE" ? (
+          <p className="mt-2 text-sm font-medium text-done">
+            Done — the guest scanned and confirmed. They can still download.
+          </p>
+        ) : null}
+        {status !== "READY" && status !== "DONE" && !canReady ? (
+          <p className="mt-2 text-sm text-muted">
+            Save invoice and link separately. Ready is automatic when both are in.
+          </p>
+        ) : null}
       </div>
 
-      <form action={readyAction} className="space-y-3 border border-line p-4">
-        <label className="block">
-          <span className="mb-1.5 block text-sm font-medium">WeTransfer / download link</span>
-          <input
-            name="weTransferUrl"
-            defaultValue={weTransferUrl ?? ""}
-            placeholder="https://wetransfer.com/downloads/…"
-            className="field"
-          />
-        </label>
-        {readyState.error ? <p className="notice notice-error">{readyState.error}</p> : null}
-        {readyState.warning ? <p className="notice notice-error">{readyState.warning}</p> : null}
-        {readyState.success ? <p className="notice">{readyState.success}</p> : null}
-        <button type="submit" disabled={readyPending} className="btn btn-primary">
-          {readyPending ? "Saving…" : "Save link and mark ready"}
-        </button>
-      </form>
+      {status === "DONE" ? null : (
+        <div className="grid gap-4 sm:grid-cols-2">
+          <form action={invoiceAction} className="space-y-3 border border-line p-4">
+            <label className="block">
+              <span className="mb-1.5 block text-sm font-medium">Invoice / receipt number</span>
+              <input
+                name="invoiceNumber"
+                defaultValue={invoiceNumber ?? ""}
+                placeholder="INV-12345"
+                className="field"
+                required
+              />
+            </label>
+            <p className="text-sm text-muted">Save this on its own. The media link can wait.</p>
+            <FormNotice state={invoiceState} />
+            <button type="submit" disabled={invoicePending} className="btn btn-black">
+              {invoicePending ? "Saving…" : "Save invoice"}
+            </button>
+          </form>
 
-      {status === "READY" ? (
+          <form action={linkAction} className="space-y-3 border border-line p-4">
+            <label className="block">
+              <span className="mb-1.5 block text-sm font-medium">WeTransfer / download link</span>
+              <input
+                name="weTransferUrl"
+                defaultValue={weTransferUrl ?? ""}
+                placeholder="https://wetransfer.com/downloads/…"
+                className="field"
+              />
+            </label>
+            <p className="text-sm text-muted">
+              Paste when upload finishes. If the invoice is already saved, this marks Ready.
+            </p>
+            <FormNotice state={linkState} />
+            <button type="submit" disabled={linkPending} className="btn btn-primary">
+              {linkPending ? "Saving…" : weTransferUrl ? "Update link" : "Save link"}
+            </button>
+          </form>
+        </div>
+      )}
+
+      {status === "READY" || status === "DONE" ? (
         <div className="space-y-3 border border-line p-4">
-          <p className="text-sm font-medium">Notify guest — same page URL, never a new one</p>
+          <p className="text-sm font-medium">Guest already emailed on status change</p>
           {notifiedAt ? <p className="text-sm text-muted">Last email logged at {notifiedAt}</p> : null}
           {guestEmail ? (
             <form action={notifyAction}>
-              <button type="submit" disabled={notifyPending} className="btn btn-black">
-                {notifyPending ? "Sending…" : `Email ${guestEmail}`}
+              <button type="submit" disabled={notifyPending} className="btn btn-ghost">
+                {notifyPending ? "Sending…" : `Resend to ${guestEmail}`}
               </button>
             </form>
           ) : (
             <p className="text-sm text-muted">No email on this package.</p>
           )}
-          {notifyState.error ? <p className="notice notice-error">{notifyState.error}</p> : null}
-          {notifyState.success ? <p className="notice">{notifyState.success}</p> : null}
+          <FormNotice state={notifyState} />
           {whatsappHref && guestPhone ? (
             <a href={whatsappHref} target="_blank" rel="noreferrer" className="btn btn-ghost">
               Open WhatsApp to {guestPhone}
@@ -91,4 +141,11 @@ export function ProductionControls({
       ) : null}
     </div>
   );
+}
+
+function FormNotice({ state }: { state: JobFormState }) {
+  if (state.error) return <p className="notice notice-error">{state.error}</p>;
+  if (state.warning) return <p className="notice notice-error">{state.warning}</p>;
+  if (state.success) return <p className="notice">{state.success}</p>;
+  return null;
 }

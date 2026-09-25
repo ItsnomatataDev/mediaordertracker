@@ -7,7 +7,9 @@ import { getJobById, publicJobUrl } from "@/lib/jobs";
 import { qrDataUrl } from "@/lib/qr";
 import { requireStaff } from "@/lib/session";
 
-export default async function HandoffPage({ params }: PageProps<"/packages/[id]/handoff">) {
+export default async function HandoffPage({
+  params,
+}: PageProps<"/packages/[id]/handoff">) {
   await requireStaff();
   const { id } = await params;
   const job = await getJobById(id);
@@ -17,7 +19,7 @@ export default async function HandoffPage({ params }: PageProps<"/packages/[id]/
   const qr = await qrDataUrl(url);
 
   return (
-    <div className="mx-auto max-w-xl">
+    <div className="mx-auto max-w-xl print:mx-0 print:max-w-none">
       <MediaReceipt
         qr={qr}
         reference={job.reference}
@@ -31,7 +33,9 @@ export default async function HandoffPage({ params }: PageProps<"/packages/[id]/
         <HandoffMonitor jobId={job.id} />
         <section className="border border-line bg-white p-5">
           <h2 className="text-lg font-semibold">Buyer photos</h2>
-          <p className="mt-1 text-sm text-muted">Take pictures now while the guest is at the desk.</p>
+          <p className="mt-1 text-sm text-muted">
+            Take pictures now while the guest is at the desk.
+          </p>
           <div className="mt-4">
             <PackagePhotos jobId={job.id} photos={job.photos} />
           </div>

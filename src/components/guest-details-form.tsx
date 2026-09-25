@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { confirmGuestDetailsAction, type GuestFormState } from "@/app/actions/guest";
+import { PhoneField } from "@/components/phone-field";
 
 const initial: GuestFormState = {};
 
@@ -27,10 +28,7 @@ export function GuestDetailsForm({
         <span className="mb-1 block text-sm">Your name</span>
         <input name="guestName" defaultValue={name} required className="field" />
       </label>
-      <label className="block">
-        <span className="mb-1 block text-sm">WhatsApp</span>
-        <input name="guestPhone" defaultValue={phone} inputMode="tel" className="field" />
-      </label>
+      <PhoneField defaultValue={phone} />
       <label className="block">
         <span className="mb-1 block text-sm">Email</span>
         <input name="guestEmail" type="email" defaultValue={email} className="field" />

@@ -65,7 +65,7 @@ CREATE TABLE "verification" (
     CONSTRAINT "verification_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
+
 CREATE TABLE "DailySequence" (
     "locationPrefix" TEXT NOT NULL,
     "dateKey" TEXT NOT NULL,

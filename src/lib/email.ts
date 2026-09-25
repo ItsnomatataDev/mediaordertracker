@@ -126,6 +126,64 @@ export async function sendJobCreatedEmail(input: {
   });
 }
 
+const STATUS_COPY = {
+  EDITING: {
+    subject: (reference: string) => `We are editing your Victoria Falls flight media (${reference})`,
+    preheader: "Your photos and video are being edited.",
+    text: "We are editing your photos and video now. You will get another email when they are ready to download.",
+    html: "We are editing your photos and video now. You will get another email when they are ready to download.",
+    cta: "Open my media package",
+  },
+  UPLOADING: {
+    subject: (reference: string) => `We are uploading your Victoria Falls flight media (${reference})`,
+    preheader: "Your media is being uploaded.",
+    text: "Your photos and video are being uploaded. You will get another email when they are ready to download.",
+    html: "Your photos and video are being uploaded. You will get another email when they are ready to download.",
+    cta: "Open my media package",
+  },
+  DONE: {
+    subject: (reference: string) => `Your Victoria Falls flight media package is done (${reference})`,
+    preheader: "Your package is done. You can still download from the same link.",
+    text: "Your package is done. You can still download your photos and video from the same personal page.",
+    html: "Your package is done. You can still download your photos and video from the same personal page.",
+    cta: "Open my media package",
+  },
+} as const;
+
+export async function sendStatusChangeEmail(input: {
+  to: string;
+  guestName: string;
+  reference: string;
+  publicToken: string;
+  status: "EDITING" | "UPLOADING" | "DONE";
+  origin?: string;
+}) {
+  const copy = STATUS_COPY[input.status];
+  const pageUrl = `${input.origin || getPublicAppUrl()}${jobPublicPath(input.publicToken)}?src=email`;
+  await send({
+    to: input.to,
+    subject: copy.subject(input.reference),
+    text: [
+      `Hi ${input.guestName},`,
+      "",
+      copy.text,
+      pageUrl,
+      "",
+      `Package: ${input.reference}`,
+      "",
+      "IT's No Matata",
+    ].join("\n"),
+    html: brandedHtml({
+      preheader: copy.preheader,
+      heading: `Hi ${input.guestName}`,
+      body: `<p style="margin:0;font-size:15px;line-height:1.55;color:#0a0a0a;">${copy.html}</p>`,
+      ctaLabel: copy.cta,
+      ctaUrl: pageUrl,
+      footnote: `Package: <strong style="color:#0a0a0a;">${escapeHtml(input.reference)}</strong><br />This link does not change.`,
+    }),
+  });
+}
+
 export async function sendReadyEmail(input: {
   to: string;
   guestName: string;

@@ -1,6 +1,5 @@
-import { Wordmark } from "@/components/wordmark";
 import { locationLabel } from "@/lib/constants";
-import { formatDateTime } from "@/lib/format";
+import { formatDate } from "@/lib/format";
 
 export function MediaReceipt({
   qr,
@@ -8,7 +7,6 @@ export function MediaReceipt({
   guestName,
   location,
   createdAt,
-  url,
   invoiceNumber,
 }: {
   qr: string;
@@ -16,36 +14,40 @@ export function MediaReceipt({
   guestName: string;
   location: string;
   createdAt: Date;
-  url: string;
-  invoiceNumber?: string | null;
-}) {
+      url?: string;
+      invoiceNumber?: string | null;
+    }) {
   return (
-    <article className="print-slip mx-auto max-w-md border border-black bg-white">
-      <div className="bg-black px-5 py-4 text-center">
-        <Wordmark className="mx-auto h-16 w-auto" />
-        <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-orange">
+    <article className="print-slip mx-auto w-[80mm] max-w-full border border-black bg-white">
+      <div className="bg-black px-2 py-2 text-center">
+        <img
+          src="/logo.png"
+          alt="IT's No Matata"
+          width={72}
+          height={72}
+          className="print-logo mx-auto h-9 w-9 object-contain"
+        />
+        <p className="mt-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-orange">
           Media download
         </p>
       </div>
-      <div className="px-5 py-5 text-center">
-        <h1 className="text-2xl font-semibold">{guestName}</h1>
-        <p className="mt-1 text-sm">{formatDateTime(createdAt)}</p>
-        <p className="mt-1 text-sm">{locationLabel(location)}</p>
-        {invoiceNumber ? (
-          <p className="mt-1 font-mono text-sm">Invoice {invoiceNumber}</p>
-        ) : null}
-        <div className="mx-auto mt-5 w-fit border border-black p-2">
-          <img src={qr} alt={`QR for media package ${reference}`} width={280} height={280} className="h-70 w-70" />
-        </div>
-        <p className="mt-4 font-mono text-lg font-semibold">{reference}</p>
-        <p className="mt-3 text-sm leading-relaxed">
-          Scan this QR to open the media package and download photos and video — now at the desk,
-          or later on your phone. This is not the purchase receipt.
+      <div className="px-2 py-2 text-center">
+        <h1 className="text-sm font-semibold leading-tight">{guestName}</h1>
+        <p className="mt-0.5 text-[10px] leading-tight">
+          {formatDate(createdAt)} · {locationLabel(location)}
         </p>
-        <p className="mt-3 break-all text-[11px] text-muted">{url}</p>
-      </div>
-      <div className="border-t border-black px-5 py-3 text-center text-[11px] uppercase tracking-wide">
-        IT&apos;s No Matata · {locationLabel(location)}
+        {invoiceNumber ? (
+          <p className="mt-0.5 font-mono text-[10px] leading-tight">Inv {invoiceNumber}</p>
+        ) : null}
+        <img
+          src={qr}
+          alt={`QR for ${reference}`}
+          width={160}
+          height={160}
+          className="print-qr mx-auto mt-2 h-40 w-40"
+        />
+        <p className="mt-1.5 font-mono text-xs font-semibold leading-tight">{reference}</p>
+        <p className="mt-1 text-[10px] leading-snug">Scan for photos &amp; video. Not a tax receipt.</p>
       </div>
     </article>
   );

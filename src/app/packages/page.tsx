@@ -23,7 +23,10 @@ export default async function PackagesPage({ searchParams }: PageProps<"/package
             {location ? locationLabel(location) : "ZHC · JETBOAT · EleCrew"}
           </p>
           <h1 className="text-2xl font-semibold">Packages</h1>
-          <p className="mt-1 text-sm text-muted">Media packages to deliver to clients.</p>
+          <p className="mt-1 text-sm text-muted">
+            Print from this list. Guests are emailed when status changes — you do not have to open
+            each package.
+          </p>
         </div>
         <form className="flex flex-wrap items-end gap-2" method="get">
           <label className="block">
@@ -78,19 +81,30 @@ export default async function PackagesPage({ searchParams }: PageProps<"/package
         </form>
       </div>
 
-      <div className="mt-6 overflow-x-auto border border-line bg-white">
-        <table className="hidden min-w-[78rem] w-full table-fixed text-left text-sm lg:table">
+      <div className="mt-6 w-full overflow-x-auto border border-line bg-white">
+        <table className="hidden w-full table-fixed text-left text-sm lg:table">
+          <colgroup>
+            <col className="w-[11%]" />
+            <col className="w-[12%]" />
+            <col className="w-[10%]" />
+            <col className="w-[13%]" />
+            <col className="w-[15%]" />
+            <col className="w-[9%]" />
+            <col className="w-[6%]" />
+            <col className="w-[11%]" />
+            <col className="w-[13%]" />
+          </colgroup>
           <thead className="border-b border-line text-xs font-medium text-muted">
             <tr>
-              <th className="w-[12%] px-5 py-4">Package</th>
-              <th className="w-[14%] px-5 py-4">Invoice</th>
-              <th className="w-[12%] px-5 py-4">Date</th>
-              <th className="w-[14%] px-5 py-4">Location</th>
-              <th className="w-[16%] px-5 py-4">Guest</th>
-              <th className="w-[10%] px-5 py-4">Status</th>
-              <th className="w-[8%] px-5 py-4">Age</th>
-              <th className="w-[10%] px-5 py-4">Scans / clicks</th>
-              <th className="w-[4%] px-5 py-4"></th>
+              <th className="px-4 py-4 xl:px-6">Package</th>
+              <th className="px-4 py-4 xl:px-6">Invoice</th>
+              <th className="px-4 py-4 xl:px-6">Date</th>
+              <th className="px-4 py-4 xl:px-6">Location</th>
+              <th className="px-4 py-4 xl:px-6">Guest</th>
+              <th className="px-4 py-4 xl:px-6">Status</th>
+              <th className="px-4 py-4 xl:px-6">Age</th>
+              <th className="px-4 py-4 xl:px-6">Scans / clicks</th>
+              <th className="px-4 py-4 xl:px-6"></th>
             </tr>
           </thead>
           <tbody>
@@ -101,26 +115,38 @@ export default async function PackagesPage({ searchParams }: PageProps<"/package
                   key={job.id}
                   className={`border-t border-line ${overdue ? "bg-orange-soft" : ""}`}
                 >
-                  <td className="whitespace-nowrap px-5 py-4 font-mono text-sm">{job.reference}</td>
-                  <td className="px-5 py-4 font-mono text-sm">{job.invoiceNumber || "—"}</td>
-                  <td className="whitespace-nowrap px-5 py-4">
+                  <td className="truncate px-4 py-4 font-mono text-sm xl:px-6">{job.reference}</td>
+                  <td className="truncate px-4 py-4 font-mono text-sm xl:px-6">
+                    {job.invoiceNumber || "—"}
+                  </td>
+                  <td className="px-4 py-4 xl:px-6">
                     <p>{formatDate(job.createdAt)}</p>
                     <p className="text-xs text-muted">{formatTime(job.createdAt)}</p>
                   </td>
-                  <td className="px-5 py-4">{locationLabel(job.location)}</td>
-                  <td className="px-5 py-4 font-medium">{job.guestName}</td>
-                  <td className="px-5 py-4">
+                  <td className="px-4 py-4 xl:px-6">{locationLabel(job.location)}</td>
+                  <td className="px-4 py-4 font-medium xl:px-6">{job.guestName}</td>
+                  <td className="px-4 py-4 xl:px-6">
                     <StatusBadge status={job.status} />
                   </td>
-                  <td className="whitespace-nowrap px-5 py-4 text-muted">{formatAge(job.createdAt)}</td>
-                  <td className="whitespace-nowrap px-5 py-4 text-sm">
+                  <td className="px-4 py-4 text-muted xl:px-6">{formatAge(job.createdAt)}</td>
+                  <td className="px-4 py-4 text-sm xl:px-6">
                     <span className="font-semibold">QR {job.qrScanCount}</span>
                     <span className="text-muted"> · Portal {job.portalClickCount}</span>
                   </td>
-                  <td className="px-5 py-4 text-right">
-                    <Link href={`/packages/${job.id}`} className="font-medium text-orange">
-                      Open
-                    </Link>
+                  <td className="px-4 py-4 text-right xl:px-6">
+                    <div className="flex flex-wrap items-center justify-end gap-x-3 gap-y-1">
+                      <Link href={`/packages/${job.id}`} className="font-medium text-orange">
+                        Open
+                      </Link>
+                      <Link
+                        href={`/packages/${job.id}/print?autoprint=1`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="font-medium"
+                      >
+                        Print
+                      </Link>
+                    </div>
                   </td>
                 </tr>
               );
@@ -129,7 +155,7 @@ export default async function PackagesPage({ searchParams }: PageProps<"/package
         </table>
         <div className="divide-y divide-line lg:hidden">
           {packages.map((job) => (
-            <Link key={job.id} href={`/packages/${job.id}`} className="block px-5 py-4">
+            <div key={job.id} className="px-5 py-4">
               <div className="flex items-center justify-between gap-3">
                 <span className="font-mono text-sm">{job.reference}</span>
                 <StatusBadge status={job.status} />
@@ -142,7 +168,20 @@ export default async function PackagesPage({ searchParams }: PageProps<"/package
                 {formatDate(job.createdAt)} · {locationLabel(job.location)} · {formatAge(job.createdAt)}{" "}
                 · QR {job.qrScanCount} · Portal {job.portalClickCount}
               </p>
-            </Link>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Link href={`/packages/${job.id}`} className="btn btn-ghost">
+                  Open
+                </Link>
+                <Link
+                  href={`/packages/${job.id}/print?autoprint=1`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="btn btn-black"
+                >
+                  Print
+                </Link>
+              </div>
+            </div>
           ))}
         </div>
         {packages.length === 0 ? (

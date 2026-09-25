@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { getJobByToken, updateGuestDetails } from "@/lib/jobs";
+import { phoneFromFormData } from "@/lib/phone";
 import { guestDetailsSchema } from "@/lib/validation";
 
 export type GuestFormState = {
@@ -22,7 +23,7 @@ export async function confirmGuestDetailsAction(
   const parsed = guestDetailsSchema.safeParse({
     guestName: String(formData.get("guestName") || ""),
     guestEmail: String(formData.get("guestEmail") || "").trim(),
-    guestPhone: String(formData.get("guestPhone") || "").trim(),
+    guestPhone: phoneFromFormData(formData),
   });
 
   if (!parsed.success) {
