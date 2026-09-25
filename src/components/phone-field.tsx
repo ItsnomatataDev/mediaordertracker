@@ -2,7 +2,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { DEFAULT_PHONE_COUNTRY, PHONE_COUNTRIES, splitPhone } from "@/lib/phone";
+import {
+  DEFAULT_PHONE_COUNTRY,
+  PHONE_COUNTRIES,
+  splitPhone,
+} from "@/lib/phone";
 
 const LAST_COUNTRY_KEY = "matata.lastPhoneCountry";
 
@@ -16,6 +20,7 @@ export function PhoneField({
   rememberCountry?: boolean;
 }) {
   const parsed = splitPhone(defaultValue);
+
   const [country, setCountry] = useState(
     parsed.country || DEFAULT_PHONE_COUNTRY
   );
@@ -34,12 +39,12 @@ export function PhoneField({
   }, [defaultValue, rememberCountry]);
 
   return (
-    <label className="block">
+    <label className="block w-full">
       <span className="mb-1.5 block text-sm font-medium">
         {label}
       </span>
 
-      <div className="flex w-full gap-2">
+      <div className="flex w-full min-w-0">
         {/* Country code */}
         <select
           name="phoneCountry"
@@ -56,7 +61,7 @@ export function PhoneField({
               );
             }
           }}
-          className="field w-[7rem] shrink-0"
+          className="field w-[7.5rem] min-w-[7.5rem] shrink-0 rounded-r-none"
           aria-label="Country code"
         >
           {PHONE_COUNTRIES.map((item) => (
@@ -76,7 +81,7 @@ export function PhoneField({
           inputMode="tel"
           autoComplete="tel-national"
           placeholder="77 123 4567"
-          className="field min-w-0 flex-1"
+          className="field w-full min-w-0 flex-1 rounded-l-none"
         />
       </div>
     </label>
