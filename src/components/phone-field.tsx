@@ -1,7 +1,6 @@
-
 "use client";
 
-import { useEffect, useState } from "react";
+import { useId, useState, useSyncExternalStore } from "react";
 import {
   DEFAULT_PHONE_COUNTRY,
   PHONE_COUNTRIES,
@@ -9,6 +8,24 @@ import {
 } from "@/lib/phone";
 
 const LAST_COUNTRY_KEY = "matata.lastPhoneCountry";
+
+function subscribeToCountry(onChange: () => void) {
+  window.addEventListener("storage", onChange);
+  return () => window.removeEventListener("storage", onChange);
+}
+
+function getSavedCountry() {
+  try {
+    const saved = window.localStorage.getItem(LAST_COUNTRY_KEY);
+    return PHONE_COUNTRIES.some((item) => item.code === saved) ? saved : null;
+  } catch {
+    return null;
+  }
+}
+
+function getServerCountry() {
+  return null;
+}
 
 export function PhoneField({
   label = "WhatsApp",
@@ -19,33 +36,27 @@ export function PhoneField({
   defaultValue?: string;
   rememberCountry?: boolean;
 }) {
+  const inputId = useId();
   const parsed = splitPhone(defaultValue);
 
-  const [country, setCountry] = useState(
-    parsed.country || DEFAULT_PHONE_COUNTRY
+  const [selectedCountry, setCountry] = useState<string | null>(null);
+  const savedCountry = useSyncExternalStore(
+    subscribeToCountry,
+    getSavedCountry,
+    getServerCountry,
   );
-
-  useEffect(() => {
-    if (!rememberCountry || defaultValue) return;
-
-    const saved = window.localStorage.getItem(LAST_COUNTRY_KEY);
-
-    if (
-      saved &&
-      PHONE_COUNTRIES.some((item) => item.code === saved)
-    ) {
-      setCountry(saved);
-    }
-  }, [defaultValue, rememberCountry]);
+  const country = selectedCountry
+    ?? (rememberCountry && !defaultValue ? savedCountry : null)
+    ?? parsed.country
+    ?? DEFAULT_PHONE_COUNTRY;
 
   return (
-    <label className="block w-full">
-      <span className="mb-1.5 block text-sm font-medium">
+    <div className="w-full min-w-0">
+      <label htmlFor={inputId} className="mb-1.5 block text-sm font-medium">
         {label}
-      </span>
+      </label>
 
-      <div className="flex w-full min-w-0">
-        {/* Country code */}
+      <div className="grid grid-cols-[7.5rem_minmax(0,1fr)] gap-2">
         <select
           name="phoneCountry"
           value={country}
@@ -55,14 +66,16 @@ export function PhoneField({
             setCountry(value);
 
             if (rememberCountry) {
-              window.localStorage.setItem(
-                LAST_COUNTRY_KEY,
-                value
-              );
+              try {
+                window.localStorage.setItem(LAST_COUNTRY_KEY, value);
+              } catch {
+                // Country selection still works when browser storage is blocked.
+              }
             }
           }}
-          className="field w-[7.5rem] min-w-[7.5rem] shrink-0 rounded-r-none"
+          className="field min-w-0"
           aria-label="Country code"
+          autoComplete="tel-country-code"
         >
           {PHONE_COUNTRIES.map((item) => (
             <option
@@ -74,17 +87,21 @@ export function PhoneField({
           ))}
         </select>
 
-        {/* Phone number */}
         <input
+          id={inputId}
+          type="tel"
           name="phoneNational"
           defaultValue={parsed.national}
           inputMode="tel"
           autoComplete="tel-national"
-          placeholder="77 123 4567"
-          className="field w-full min-w-0 flex-1 rounded-l-none"
+          placeholder={country === "263" ? "78 120 2592" : "Phone number"}
+          aria-describedby={`${inputId}-hint`}
+          className="field min-w-0"
         />
       </div>
-    </label>
+      <p id={`${inputId}-hint`} className="mt-1 text-xs text-muted">
+        Select the country code, then enter the phone number.
+      </p>
+    </div>
   );
 }
-
