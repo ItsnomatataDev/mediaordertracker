@@ -56,7 +56,7 @@ export function PhoneField({
         {label}
       </label>
 
-      <div className="grid grid-cols-[7.5rem_minmax(0,1fr)] gap-2">
+      <div className="phone-field-row">
         <select
           name="phoneCountry"
           value={country}
@@ -69,11 +69,11 @@ export function PhoneField({
               try {
                 window.localStorage.setItem(LAST_COUNTRY_KEY, value);
               } catch {
-                // Country selection still works when browser storage is blocked.
+
               }
             }
           }}
-          className="field min-w-0"
+          className="field phone-field-country"
           aria-label="Country code"
           autoComplete="tel-country-code"
         >
@@ -96,7 +96,7 @@ export function PhoneField({
           autoComplete="tel-national"
           placeholder={country === "263" ? "78 120 2592" : "Phone number"}
           aria-describedby={`${inputId}-hint`}
-          className="field min-w-0"
+          className="field phone-field-number"
         />
       </div>
       <p id={`${inputId}-hint`} className="mt-1 text-xs text-muted">

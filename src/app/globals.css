@@ -75,6 +75,25 @@ button {
   border-color: var(--black);
 }
 
+.phone-field-row {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  gap: 8px;
+}
+
+.phone-field-row > .phone-field-country {
+  flex: 0 0 7.5rem;
+  width: 7.5rem;
+  min-width: 0;
+}
+
+.phone-field-row > .phone-field-number {
+  flex: 1 1 0;
+  width: 0;
+  min-width: 0;
+}
+
 .btn {
   display: inline-flex;
   align-items: center;
