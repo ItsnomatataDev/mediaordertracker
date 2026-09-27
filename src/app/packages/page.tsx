@@ -1,12 +1,13 @@
 import Link from "next/link";
+import { DeleteAllPackages } from "@/components/delete-all-packages";
 import { StatusBadge } from "@/components/status-badge";
 import { LOCATIONS, STAFF_STATUSES, locationLabel } from "@/lib/constants";
 import { formatAge, formatDate, formatTime, harareInputDate, isOverdue } from "@/lib/format";
 import { searchJobs } from "@/lib/jobs";
-import { requireStaff } from "@/lib/session";
+import { isAdmin, requireStaff } from "@/lib/session";
 
 export default async function PackagesPage({ searchParams }: PageProps<"/packages">) {
-  await requireStaff();
+  const session = await requireStaff();
   const params = await searchParams;
   const q = typeof params.q === "string" ? params.q : "";
   const location = typeof params.location === "string" ? params.location : "";
@@ -190,6 +191,7 @@ export default async function PackagesPage({ searchParams }: PageProps<"/package
           </p>
         ) : null}
       </div>
+      {isAdmin(session.user.role) ? <DeleteAllPackages /> : null}
     </div>
   );
 }
