@@ -1,10 +1,11 @@
 "use client";
 
-import { useId, useState, useSyncExternalStore } from "react";
+import { useEffect, useId, useRef, useState, useSyncExternalStore } from "react";
 import {
   DEFAULT_PHONE_COUNTRY,
   PHONE_COUNTRIES,
   splitPhone,
+  checkPhone,
 } from "@/lib/phone";
 
 const LAST_COUNTRY_KEY = "matata.lastPhoneCountry";
@@ -38,6 +39,9 @@ export function PhoneField({
 }) {
   const inputId = useId();
   const parsed = splitPhone(defaultValue);
+  const input = useRef<HTMLInputElement>(null);
+  const [national, setNational] = useState(parsed.national);
+  const [touched, setTouched] = useState(false);
 
   const [selectedCountry, setCountry] = useState<string | null>(null);
   const savedCountry = useSyncExternalStore(
@@ -49,6 +53,11 @@ export function PhoneField({
     ?? (rememberCountry && !defaultValue ? savedCountry : null)
     ?? parsed.country
     ?? DEFAULT_PHONE_COUNTRY;
+
+  const result = checkPhone(country, national);
+  useEffect(() => {
+    input.current?.setCustomValidity(result.error);
+  }, [result.error]);
 
   return (
     <div className="w-full min-w-0">
@@ -69,7 +78,7 @@ export function PhoneField({
               try {
                 window.localStorage.setItem(LAST_COUNTRY_KEY, value);
               } catch {
-
+                // Keep selection usable when browser storage is unavailable.
               }
             }
           }}
@@ -88,19 +97,27 @@ export function PhoneField({
         </select>
 
         <input
+          ref={input}
+          onChange={(event) => setNational(event.target.value)}
+          onBlur={() => setTouched(true)}
+          onInvalid={() => setTouched(true)}
+          aria-invalid={touched && Boolean(result.error)}
           id={inputId}
           type="tel"
           name="phoneNational"
-          defaultValue={parsed.national}
+          value={national}
           inputMode="tel"
           autoComplete="tel-national"
           placeholder={country === "263" ? "78 120 2592" : "Phone number"}
-          aria-describedby={`${inputId}-hint`}
+          aria-describedby={`${inputId}-hint ${inputId}-error`}
           className="field phone-field-number"
         />
       </div>
       <p id={`${inputId}-hint`} className="mt-1 text-xs text-muted">
         Select the country code, then enter the phone number.
+      </p>
+      <p id={`${inputId}-error`} aria-live="polite" className="mt-1 text-xs text-orange">
+        {touched ? result.error : ""}
       </p>
     </div>
   );

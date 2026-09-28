@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { isValidInternationalPhone } from "@/lib/phone";
+import { contactEmailSchema } from "@/lib/contact-email";
 import { LOCATION_CODES } from "@/lib/constants";
 
 export const pinSchema = z
@@ -15,8 +17,8 @@ export const loginSchema = z.object({
 export const createJobSchema = z
   .object({
     guestName: z.string().trim().min(2, "Name is required").max(80),
-    guestEmail: z.union([z.email("Enter a valid email"), z.literal("")]),
-    guestPhone: z.string().trim().max(24),
+    guestEmail: contactEmailSchema,
+    guestPhone: z.string().trim().refine((value) => !value || isValidInternationalPhone(value), "Enter a valid WhatsApp number with the correct country code"),
     location: z.enum(LOCATION_CODES),
     invoiceNumber: z.string().trim().max(40),
   })
@@ -28,8 +30,8 @@ export const createJobSchema = z
 export const guestDetailsSchema = z
   .object({
     guestName: z.string().trim().min(2).max(80),
-    guestEmail: z.union([z.email("Enter a valid email"), z.literal("")]),
-    guestPhone: z.string().trim().max(24),
+    guestEmail: contactEmailSchema,
+    guestPhone: z.string().trim().refine((value) => !value || isValidInternationalPhone(value), "Enter a valid WhatsApp number with the correct country code"),
   })
   .refine((value) => value.guestEmail || value.guestPhone.trim().length >= 7, {
     message: "Add an email or WhatsApp number so we can reach you",

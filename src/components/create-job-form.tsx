@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useState } from "react";
 import { createJobAction, type JobFormState } from "@/app/actions/jobs";
+import { EmailField } from "@/components/email-field";
 import { PhoneField } from "@/components/phone-field";
 import { LOCATIONS, type LocationCode } from "@/lib/constants";
 
@@ -46,10 +47,7 @@ export function CreateJobForm() {
         <input name="guestName" required autoComplete="name" autoFocus className="field" />
       </label>
       <PhoneField rememberCountry />
-      <label className="block">
-        <span className="mb-1.5 block text-sm font-medium">Email</span>
-        <input name="guestEmail" type="email" className="field" />
-      </label>
+      <EmailField />
       <label className="block">
         <span className="mb-1.5 block text-sm font-medium">Invoice / receipt number</span>
         <input

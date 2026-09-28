@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { confirmGuestDetailsAction, type GuestFormState } from "@/app/actions/guest";
+import { EmailField } from "@/components/email-field";
 import { PhoneField } from "@/components/phone-field";
 
 const initial: GuestFormState = {};
@@ -29,10 +30,7 @@ export function GuestDetailsForm({
         <input name="guestName" defaultValue={name} required className="field" />
       </label>
       <PhoneField defaultValue={phone} />
-      <label className="block">
-        <span className="mb-1 block text-sm">Email</span>
-        <input name="guestEmail" type="email" defaultValue={email} className="field" />
-      </label>
+      <EmailField defaultValue={email} />
       {state.error ? <p className="notice notice-error">{state.error}</p> : null}
       <button type="submit" disabled={pending} className="btn btn-primary w-full">
         {pending ? "Saving…" : confirmed ? "Update my details" : "Confirm my details"}

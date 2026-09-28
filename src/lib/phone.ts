@@ -1,3 +1,4 @@
+import { parsePhoneNumberFromString } from "libphonenumber-js/max";
 import { digitsOnly } from "@/lib/format";
 
 export const PHONE_COUNTRIES = [
@@ -45,14 +46,30 @@ const COUNTRY_CODES = PHONE_COUNTRIES.map((item) => item.code).sort(
   (a, b) => b.length - a.length,
 );
 
+export function checkPhone(countryCode: string, national: string) {
+  const raw = national.trim();
+  if (!raw) return { value: "", error: "" };
+  const country = PHONE_COUNTRIES.find((item) => item.code === countryCode);
+  const error = `Enter a valid WhatsApp number${country ? ` for ${country.label}` : " and country code"}.`;
+  if (!country || !/^[+\d\s().-]+$/.test(raw)) return { value: raw, error };
+  const input = raw.startsWith("00") ? `+${raw.slice(2)}` : raw;
+  const phone = parsePhoneNumberFromString(input, { defaultCountry: country.iso, extract: false });
+  if (!phone || phone.ext || !phone.isValid() || phone.countryCallingCode !== country.code) {
+    return { value: raw, error };
+  }
+  return { value: String(phone.number), error: "" };
+}
+
 export function combinePhone(countryCode: string, national: string) {
-  const country = digitsOnly(countryCode);
-  let local = digitsOnly(national);
-  if (!local) return "";
-  if (local.startsWith("0")) local = local.replace(/^0+/, "");
-  if (!local) return "";
-  if (country && local.startsWith(country)) return `+${local}`;
-  return country ? `+${country}${local}` : `+${local}`;
+  const result = checkPhone(countryCode, national);
+  // Preserve invalid input as an invalid value so server validation cannot drop it.
+  return result.error ? `invalid:${national}` : result.value;
+}
+
+export function isValidInternationalPhone(value: string) {
+  if (!/^\+\d{7,15}$/.test(value)) return false;
+  const phone = parsePhoneNumberFromString(value, { extract: false });
+  return Boolean(phone?.isValid());
 }
 
 export function splitPhone(phone: string) {
