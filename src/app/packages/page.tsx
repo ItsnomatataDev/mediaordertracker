@@ -29,7 +29,7 @@ export default async function PackagesPage({ searchParams }: PageProps<"/package
             each package.
           </p>
         </div>
-        <form className="flex flex-wrap items-end gap-2" method="get">
+        <form className="package-filters" method="get">
           <label className="block">
             <span className="mb-1 block text-xs font-medium text-muted">Location</span>
             <select name="location" defaultValue={location} className="field w-36">

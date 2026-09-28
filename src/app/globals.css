@@ -196,3 +196,33 @@ button {
     max-height: 42mm !important;
   }
 }
+
+/* Keep controls and long guest details within narrow screens. */
+body { overflow-wrap: anywhere; }
+input, select, textarea { min-width: 0; max-width: 100%; }
+.grid > *, .flex > * { min-width: 0; }
+.btn { min-height: 44px; text-align: center; }
+nav a { display: inline-flex; align-items: center; min-height: 44px; }
+summary { cursor: pointer; min-height: 44px; padding-block: 10px; }
+:focus-visible { outline: 2px solid var(--orange); outline-offset: 3px; }
+.package-filters {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: end;
+  gap: 8px;
+  width: 100%;
+}
+.app-install { max-width: 48rem; margin: 1rem auto; padding: 0 1rem; }
+@media (max-width: 639px) {
+  .field { font-size: 16px; }
+  .phone-field-row > .phone-field-country { flex-basis: 7rem; width: 7rem; padding-inline: 8px; }
+}
+@media (min-width: 768px) {
+  .package-filters { grid-template-columns: repeat(4, minmax(0, 1fr)) auto auto; }
+}
+@media (min-width: 1280px) {
+  .package-filters { width: auto; max-width: 100%; }
+}
+@media (max-width: 359px) {
+  .package-filters { grid-template-columns: minmax(0, 1fr); }
+}

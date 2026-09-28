@@ -64,7 +64,7 @@ export default async function PackageDetailPage({ params }: PageProps<"/packages
         <Stat label="WeTransfer" value={String(stats.downloads)} hint="Download button clicks" />
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
         <div className="space-y-6">
           <section className="border border-line bg-white p-5">
             <h2 className="text-lg font-semibold">Guest</h2>
