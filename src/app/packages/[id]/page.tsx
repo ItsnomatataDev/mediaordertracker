@@ -1,16 +1,17 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ActivityLog } from "@/components/activity-log";
+import { DeletePackage } from "@/components/delete-package";
 import { PackagePhotos } from "@/components/package-photos";
 import { ProductionControls } from "@/components/production-controls";
 import { StatusBadge } from "@/components/status-badge";
 import { locationLabel } from "@/lib/constants";
 import { formatAge, formatDateTime, isOverdue, whatsappHref } from "@/lib/format";
 import { getJobById, packageAccessStats, publicJobUrl } from "@/lib/jobs";
-import { requireStaff } from "@/lib/session";
+import { isAdmin, requireStaff } from "@/lib/session";
 
 export default async function PackageDetailPage({ params }: PageProps<"/packages/[id]">) {
-  await requireStaff();
+  const session = await requireStaff();
   const { id } = await params;
   const job = await getJobById(id);
   if (!job) notFound();
@@ -131,6 +132,9 @@ export default async function PackageDetailPage({ params }: PageProps<"/packages
 
         <ActivityLog events={job.events} />
       </div>
+      {isAdmin(session.user.role) ? (
+        <DeletePackage jobId={job.id} reference={job.reference} guestName={job.guestName} />
+      ) : null}
     </div>
   );
 }
