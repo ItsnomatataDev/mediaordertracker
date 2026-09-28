@@ -1,5 +1,6 @@
 "use server";
 
+import { findPackageDuplicates, type DuplicatePackage } from "@/lib/package-duplicates";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
@@ -39,6 +40,7 @@ async function staffUser() {
 }
 
 export type JobFormState = {
+  duplicates?: DuplicatePackage[];
   error?: string;
   success?: string;
   warning?: string;
@@ -116,6 +118,11 @@ export async function createJobAction(
 
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message || "Check the guest details" };
+  }
+
+  if (formData.get("allowDuplicate") !== "yes") {
+    const duplicates = await findPackageDuplicates(parsed.data);
+    if (duplicates.length) return { duplicates };
   }
 
   const job = await createJob({

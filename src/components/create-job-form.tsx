@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import Link from "next/link";
+import { useActionState, useState, useSyncExternalStore } from "react";
 import { createJobAction, type JobFormState } from "@/app/actions/jobs";
 import { EmailField } from "@/components/email-field";
 import { PhoneField } from "@/components/phone-field";
@@ -9,19 +10,30 @@ import { LOCATIONS, type LocationCode } from "@/lib/constants";
 const initial: JobFormState = {};
 const LAST_LOCATION_KEY = "matata.lastLocation";
 
+function subscribeLocation(onChange: () => void) {
+  window.addEventListener("storage", onChange);
+  return () => window.removeEventListener("storage", onChange);
+}
+function savedLocation(): LocationCode {
+  try {
+    const saved = window.localStorage.getItem(LAST_LOCATION_KEY);
+    if (LOCATIONS.some((item) => item.code === saved)) return saved as LocationCode;
+  } catch { /* Storage is optional. */ }
+  return "ZHC";
+}
+
 export function CreateJobForm() {
   const [state, action, pending] = useActionState(createJobAction, initial);
-  const [location, setLocation] = useState<LocationCode>("ZHC");
-
-  useEffect(() => {
-    const saved = window.localStorage.getItem(LAST_LOCATION_KEY);
-    if (saved && LOCATIONS.some((item) => item.code === saved)) {
-      setLocation(saved as LocationCode);
-    }
-  }, []);
+  const remembered = useSyncExternalStore(subscribeLocation, savedLocation, () => "ZHC" as LocationCode);
+  const [selectedLocation, setLocation] = useState<LocationCode | null>(null);
+  const location = selectedLocation ?? remembered;
+  const [name, setName] = useState("");
+  const [invoice, setInvoice] = useState("");
+  const [changed, setChanged] = useState(false);
+  const duplicates = changed ? undefined : state.duplicates;
 
   return (
-    <form action={action} className="max-w-lg space-y-4">
+    <form action={action} onChange={() => setChanged(true)} onSubmit={() => setChanged(false)} className="max-w-lg space-y-4">
       <label className="block">
         <span className="mb-1.5 block text-sm font-medium">Location</span>
         <select
@@ -31,7 +43,7 @@ export function CreateJobForm() {
           onChange={(event) => {
             const next = event.target.value as LocationCode;
             setLocation(next);
-            window.localStorage.setItem(LAST_LOCATION_KEY, next);
+            try { window.localStorage.setItem(LAST_LOCATION_KEY, next); } catch { /* Storage is optional. */ }
           }}
           className="field"
         >
@@ -44,7 +56,7 @@ export function CreateJobForm() {
       </label>
       <label className="block">
         <span className="mb-1.5 block text-sm font-medium">Guest name</span>
-        <input name="guestName" required autoComplete="name" autoFocus className="field" />
+        <input name="guestName" value={name} onChange={(event) => setName(event.target.value)} required autoComplete="name" autoFocus className="field" />
       </label>
       <PhoneField rememberCountry />
       <EmailField />
@@ -52,6 +64,8 @@ export function CreateJobForm() {
         <span className="mb-1.5 block text-sm font-medium">Invoice / receipt number</span>
         <input
           name="invoiceNumber"
+          value={invoice}
+          onChange={(event) => setInvoice(event.target.value)}
           autoComplete="off"
           placeholder="Optional — save later from the package"
           className="field"
@@ -62,6 +76,25 @@ export function CreateJobForm() {
         free. The guest is emailed when status changes.
       </p>
       {state.error ? <p className="notice notice-error">{state.error}</p> : null}
+      {duplicates?.length ? (
+        <section role="status" className="notice space-y-3">
+          <h2 className="font-semibold">An existing package may match this purchase</h2>
+          <p className="text-sm">Check these packages before creating another. Contact matches may be returning clients.</p>
+          {duplicates.map((job) => (
+            <div key={job.id} className="border-t border-line pt-3 text-sm">
+              <p className="font-medium">{job.reference} · {job.guestName}</p>
+              <p>{job.match} · {job.location} · {new Date(job.createdAt).toLocaleDateString("en-GB", { timeZone: "Africa/Harare" })}</p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <Link href={`/packages/${job.id}`} className="btn btn-ghost">Open package</Link>
+                <a href={`/packages/${job.id}/print?autoprint=1`} target="_blank" rel="noreferrer" className="btn btn-black">Reprint receipt</a>
+              </div>
+            </div>
+          ))}
+          <button type="submit" name="allowDuplicate" value="yes" disabled={pending} className="btn btn-ghost">
+            {pending ? "Creating…" : "Create another package anyway"}
+          </button>
+        </section>
+      ) : null}
       <button type="submit" disabled={pending} className="btn btn-primary w-full">
         {pending ? "Creating…" : "Create package and show QR"}
       </button>

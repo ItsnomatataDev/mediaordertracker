@@ -78,7 +78,7 @@ export function PhoneField({
               try {
                 window.localStorage.setItem(LAST_COUNTRY_KEY, value);
               } catch {
-                // Keep selection usable when browser storage is unavailable.
+                
               }
             }
           }}
