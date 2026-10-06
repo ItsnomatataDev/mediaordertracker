@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# Run on the Hetzner box as root. Idempotent.
 set -euo pipefail
 export DEBIAN_FRONTEND=noninteractive
 

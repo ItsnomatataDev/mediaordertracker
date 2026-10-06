@@ -18,7 +18,7 @@ function savedLocation(): LocationCode {
   try {
     const saved = window.localStorage.getItem(LAST_LOCATION_KEY);
     if (LOCATIONS.some((item) => item.code === saved)) return saved as LocationCode;
-  } catch { /* Storage is optional. */ }
+  } catch {}
   return "ZHC";
 }
 
@@ -33,7 +33,12 @@ export function CreateJobForm() {
   const duplicates = changed ? undefined : state.duplicates;
 
   return (
-    <form action={action} onChange={() => setChanged(true)} onSubmit={() => setChanged(false)} className="max-w-lg space-y-4">
+    <form
+      action={action}
+      onChange={() => setChanged(true)}
+      onSubmit={() => setChanged(false)}
+      className="max-w-lg space-y-4"
+    >
       <label className="block">
         <span className="mb-1.5 block text-sm font-medium">Location</span>
         <select
@@ -43,7 +48,11 @@ export function CreateJobForm() {
           onChange={(event) => {
             const next = event.target.value as LocationCode;
             setLocation(next);
-            try { window.localStorage.setItem(LAST_LOCATION_KEY, next); } catch { /* Storage is optional. */ }
+            try {
+              window.localStorage.setItem(LAST_LOCATION_KEY, next);
+            } catch {
+              /* Storage is optional. */
+            }
           }}
           className="field"
         >
@@ -56,12 +65,23 @@ export function CreateJobForm() {
       </label>
       <label className="block">
         <span className="mb-1.5 block text-sm font-medium">Guest name</span>
-        <input name="guestName" value={name} onChange={(event) => setName(event.target.value)} required autoComplete="name" autoFocus className="field" />
+        <input
+          name="guestName"
+          value={name}
+          onChange={(event) => setName(event.target.value)}
+          required
+          autoComplete="name"
+          autoFocus
+          className="field"
+        />
       </label>
       <PhoneField rememberCountry />
       <EmailField />
+      <EmailField />
       <label className="block">
-        <span className="mb-1.5 block text-sm font-medium">Invoice / receipt number</span>
+        <span className="mb-1.5 block text-sm font-medium">
+          Invoice / receipt number
+        </span>
         <input
           name="invoiceNumber"
           value={invoice}
@@ -72,30 +92,63 @@ export function CreateJobForm() {
         />
       </label>
       <p className="text-sm text-muted">
-        Name and WhatsApp is enough. Print the receipt from the packages list when the printer is
-        free. The guest is emailed when status changes.
+        Name and WhatsApp is enough. Print the receipt from the packages list
+        when the printer is free. The guest is emailed when status changes.
       </p>
-      {state.error ? <p className="notice notice-error">{state.error}</p> : null}
+      {state.error ? (
+        <p className="notice notice-error">{state.error}</p>
+      ) : null}
       {duplicates?.length ? (
         <section role="status" className="notice space-y-3">
-          <h2 className="font-semibold">An existing package may match this purchase</h2>
-          <p className="text-sm">Check these packages before creating another. Contact matches may be returning clients.</p>
+          <h2 className="font-semibold">
+            An existing package may match this purchase
+          </h2>
+          <p className="text-sm">
+            Check these packages before creating another. Contact matches may be
+            returning clients.
+          </p>
           {duplicates.map((job) => (
             <div key={job.id} className="border-t border-line pt-3 text-sm">
-              <p className="font-medium">{job.reference} · {job.guestName}</p>
-              <p>{job.match} · {job.location} · {new Date(job.createdAt).toLocaleDateString("en-GB", { timeZone: "Africa/Harare" })}</p>
+              <p className="font-medium">
+                {job.reference} · {job.guestName}
+              </p>
+              <p>
+                {job.match} · {job.location} ·{" "}
+                {new Date(job.createdAt).toLocaleDateString("en-GB", {
+                  timeZone: "Africa/Harare",
+                })}
+              </p>
               <div className="mt-2 flex flex-wrap gap-2">
-                <Link href={`/packages/${job.id}`} className="btn btn-ghost">Open package</Link>
-                <a href={`/packages/${job.id}/print?autoprint=1`} target="_blank" rel="noreferrer" className="btn btn-black">Reprint receipt</a>
+                <Link href={`/packages/${job.id}`} className="btn btn-ghost">
+                  Open package
+                </Link>
+                <a
+                  href={`/packages/${job.id}/print?autoprint=1`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="btn btn-black"
+                >
+                  Reprint receipt
+                </a>
               </div>
             </div>
           ))}
-          <button type="submit" name="allowDuplicate" value="yes" disabled={pending} className="btn btn-ghost">
+          <button
+            type="submit"
+            name="allowDuplicate"
+            value="yes"
+            disabled={pending}
+            className="btn btn-ghost"
+          >
             {pending ? "Creating…" : "Create another package anyway"}
           </button>
         </section>
       ) : null}
-      <button type="submit" disabled={pending} className="btn btn-primary w-full">
+      <button
+        type="submit"
+        disabled={pending}
+        className="btn btn-primary w-full"
+      >
         {pending ? "Creating…" : "Create package and show QR"}
       </button>
     </form>
