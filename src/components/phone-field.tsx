@@ -6,6 +6,7 @@ import {
   PHONE_COUNTRIES,
   splitPhone,
   checkPhone,
+  findPhoneCountry,
 } from "@/lib/phone";
 
 const LAST_COUNTRY_KEY = "matata.lastPhoneCountry";
@@ -41,6 +42,8 @@ export function PhoneField({
   const parsed = splitPhone(defaultValue);
   const input = useRef<HTMLInputElement>(null);
   const [national, setNational] = useState(parsed.national);
+  const countryInput = useRef<HTMLInputElement>(null);
+  const [countryQuery, setCountryQuery] = useState<string | null>(null);
   const [touched, setTouched] = useState(false);
 
   const [selectedCountry, setCountry] = useState<string | null>(null);
@@ -54,10 +57,12 @@ export function PhoneField({
     ?? parsed.country
     ?? DEFAULT_PHONE_COUNTRY;
 
+  const countryError = country ? "" : "Choose a country suggestion or enter a valid country code.";
   const result = checkPhone(country, national);
   useEffect(() => {
     input.current?.setCustomValidity(result.error);
-  }, [result.error]);
+    countryInput.current?.setCustomValidity(countryError);
+  }, [result.error, countryError]);
 
   return (
     <div className="w-full min-w-0">
@@ -66,35 +71,41 @@ export function PhoneField({
       </label>
 
       <div className="phone-field-row">
-        <select
-          name="phoneCountry"
-          value={country}
+        <input type="hidden" name="phoneCountry" value={country} />
+        <input
+          ref={countryInput}
+          type="text"
+          list={`${inputId}-countries`}
+          value={countryQuery ?? `+${country}`}
           onChange={(event) => {
-            const value = event.target.value;
-
-            setCountry(value);
-
-            if (rememberCountry) {
+            const query = event.target.value;
+            const match = findPhoneCountry(query);
+            setCountryQuery(query);
+            setCountry(match?.code ?? "");
+            if (rememberCountry && match) {
               try {
-                window.localStorage.setItem(LAST_COUNTRY_KEY, value);
+                window.localStorage.setItem(LAST_COUNTRY_KEY, match.code);
               } catch {
-                
+                // The field still works when storage is unavailable.
               }
             }
           }}
+          onBlur={() => setTouched(true)}
+          onInvalid={() => setTouched(true)}
           className="field phone-field-country"
-          aria-label="Country code"
-          autoComplete="tel-country-code"
-        >
+          aria-label="Country or dialing code"
+          aria-describedby={`${inputId}-hint ${inputId}-error`}
+          aria-invalid={touched && Boolean(countryError)}
+          autoComplete="off"
+          placeholder="Country / +code"
+        />
+        <datalist id={`${inputId}-countries`}>
           {PHONE_COUNTRIES.map((item) => (
-            <option
-              key={`${item.iso}-${item.code}`}
-              value={item.code}
-            >
-              {item.iso} +{item.code}
+            <option key={item.iso} value={`${item.label} (+${item.code})`}>
+              {item.iso}
             </option>
           ))}
-        </select>
+        </datalist>
 
         <input
           ref={input}
@@ -114,10 +125,10 @@ export function PhoneField({
         />
       </div>
       <p id={`${inputId}-hint`} className="mt-1 text-xs text-muted">
-        Select the country code, then enter the phone number.
+        Not sure of the code? Type a country name or dialing code (e.g. +263) and choose a suggestion, then enter the phone number.
       </p>
       <p id={`${inputId}-error`} aria-live="polite" className="mt-1 text-xs text-orange">
-        {touched ? result.error : ""}
+        {touched ? countryError || result.error : ""}
       </p>
     </div>
   );

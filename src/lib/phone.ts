@@ -1,48 +1,28 @@
-import { parsePhoneNumberFromString } from "libphonenumber-js/max";
+import { getCountries, getCountryCallingCode, parsePhoneNumberFromString } from "libphonenumber-js/max";
 import { digitsOnly } from "@/lib/format";
 
-export const PHONE_COUNTRIES = [
-  { code: "263", iso: "ZW", label: "Zimbabwe" },
-  { code: "27", iso: "ZA", label: "South Africa" },
-  { code: "260", iso: "ZM", label: "Zambia" },
-  { code: "267", iso: "BW", label: "Botswana" },
-  { code: "264", iso: "NA", label: "Namibia" },
-  { code: "258", iso: "MZ", label: "Mozambique" },
-  { code: "44", iso: "GB", label: "United Kingdom" },
-  { code: "1", iso: "US", label: "United States / Canada" },
-  { code: "61", iso: "AU", label: "Australia" },
-  { code: "64", iso: "NZ", label: "New Zealand" },
-  { code: "49", iso: "DE", label: "Germany" },
-  { code: "33", iso: "FR", label: "France" },
-  { code: "31", iso: "NL", label: "Netherlands" },
-  { code: "353", iso: "IE", label: "Ireland" },
-  { code: "39", iso: "IT", label: "Italy" },
-  { code: "34", iso: "ES", label: "Spain" },
-  { code: "351", iso: "PT", label: "Portugal" },
-  { code: "41", iso: "CH", label: "Switzerland" },
-  { code: "43", iso: "AT", label: "Austria" },
-  { code: "32", iso: "BE", label: "Belgium" },
-  { code: "46", iso: "SE", label: "Sweden" },
-  { code: "47", iso: "NO", label: "Norway" },
-  { code: "45", iso: "DK", label: "Denmark" },
-  { code: "91", iso: "IN", label: "India" },
-  { code: "86", iso: "CN", label: "China" },
-  { code: "81", iso: "JP", label: "Japan" },
-  { code: "82", iso: "KR", label: "South Korea" },
-  { code: "65", iso: "SG", label: "Singapore" },
-  { code: "971", iso: "AE", label: "United Arab Emirates" },
-  { code: "55", iso: "BR", label: "Brazil" },
-  { code: "254", iso: "KE", label: "Kenya" },
-  { code: "255", iso: "TZ", label: "Tanzania" },
-  { code: "256", iso: "UG", label: "Uganda" },
-  { code: "234", iso: "NG", label: "Nigeria" },
-  { code: "233", iso: "GH", label: "Ghana" },
-  { code: "265", iso: "MW", label: "Malawi" },
-] as const;
+const countryNames = new Intl.DisplayNames(["en"], { type: "region" });
+
+export const PHONE_COUNTRIES = getCountries()
+  .map((iso) => ({
+    code: getCountryCallingCode(iso),
+    iso,
+    label: countryNames.of(iso) ?? iso,
+  }))
+  .sort((a, b) => a.label.localeCompare(b.label, "en"));
+
+export function findPhoneCountry(query: string) {
+  const value = query.trim().toLowerCase();
+  return PHONE_COUNTRIES.find((item) =>
+    value === item.code || value === `+${item.code}` ||
+    value === item.iso.toLowerCase() || value === item.label.toLowerCase() ||
+    value === `${item.label} (+${item.code})`.toLowerCase(),
+  );
+}
 
 export const DEFAULT_PHONE_COUNTRY = "263";
 
-const COUNTRY_CODES = PHONE_COUNTRIES.map((item) => item.code).sort(
+const COUNTRY_CODES = [...new Set(PHONE_COUNTRIES.map((item) => item.code))].sort(
   (a, b) => b.length - a.length,
 );
 
@@ -62,7 +42,7 @@ export function checkPhone(countryCode: string, national: string) {
 
 export function combinePhone(countryCode: string, national: string) {
   const result = checkPhone(countryCode, national);
-  // Preserve invalid input as an invalid value so server validation cannot drop it.
+
   return result.error ? `invalid:${national}` : result.value;
 }
 
