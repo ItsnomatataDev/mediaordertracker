@@ -26,7 +26,6 @@ export default async function HandoffPage({
         guestName={job.guestName}
         location={job.location}
         createdAt={job.createdAt}
-        invoiceNumber={job.invoiceNumber}
         url={url}
       />
       <div className="mt-6 space-y-3 print:hidden">

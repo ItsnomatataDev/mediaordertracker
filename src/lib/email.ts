@@ -1,3 +1,4 @@
+import { prisma } from "@/lib/prisma";
 import { Resend } from "resend";
 import { getAppUrl, getPublicAppUrl, getSupportEmail, mailConfig, mailErrorMessage } from "@/lib/env";
 import { jobPublicPath } from "@/lib/format";
@@ -67,31 +68,53 @@ function brandedHtml(input: {
 }
 
 async function send(input: {
+  jobId?: string;
   to: string;
   subject: string;
   text: string;
   html: string;
 }) {
-  const mail = mailConfig();
-  if (!mail) {
-    throw new Error("Email is not configured. Add RESEND_API_KEY.");
+  const event = input.jobId ? await prisma.jobEvent.create({
+    data: {
+      jobId: input.jobId, type: "DETAILS_UPDATED", message: `Email sending to ${input.to}`,
+      metadata: { provider: "resend", status: "sending", to: input.to, subject: input.subject },
+    },
+  }) : null;
+  let messageId: string;
+  try {
+    const mail = mailConfig();
+    if (!mail) throw new Error("Email is not configured. Add RESEND_API_KEY.");
+    const { data, error } = await new Resend(mail.apiKey).emails.send({
+      from: mail.from, to: input.to, replyTo: getSupportEmail() || undefined,
+      subject: input.subject, text: input.text, html: input.html,
+    });
+    if (error) throw new Error(mailErrorMessage(error.message || error));
+    if (!data?.id) throw new Error("Resend returned no message ID; send status is unknown.");
+    messageId = data.id;
+  } catch (error) {
+    if (event) await prisma.jobEvent.update({
+      where: { id: event.id },
+      data: {
+        message: `Email failed to ${input.to}`,
+        metadata: { provider: "resend", status: "failed", to: input.to, subject: input.subject,
+          error: error instanceof Error ? error.message : "Email send failed" },
+      },
+    });
+    throw error;
   }
+  if (event) await prisma.$transaction([
+    prisma.jobEvent.update({
+      where: { id: event.id },
+      data: { type: "EMAIL_SENT", message: `Email accepted by Resend for ${input.to}`,
+        metadata: { provider: "resend", status: "accepted", to: input.to, subject: input.subject, messageId } },
+    }),
+    prisma.job.update({ where: { id: input.jobId! }, data: { notifiedAt: new Date() } }),
+  ]);
 
-  const { error } = await new Resend(mail.apiKey).emails.send({
-    from: mail.from,
-    to: input.to,
-    replyTo: getSupportEmail() || undefined,
-    subject: input.subject,
-    text: input.text,
-    html: input.html,
-  });
-
-  if (error) {
-    throw new Error(mailErrorMessage(error.message || error));
-  }
 }
 
 export async function sendJobCreatedEmail(input: {
+  jobId: string;
   to: string;
   guestName: string;
   reference: string;
@@ -100,6 +123,7 @@ export async function sendJobCreatedEmail(input: {
 }) {
   const pageUrl = `${input.origin || getPublicAppUrl()}${jobPublicPath(input.publicToken)}?src=email`;
   await send({
+    jobId: input.jobId,
     to: input.to,
     subject: `Keep this link for your Victoria Falls flight media (${input.reference})`,
     text: [
@@ -151,6 +175,7 @@ const STATUS_COPY = {
 } as const;
 
 export async function sendStatusChangeEmail(input: {
+  jobId: string;
   to: string;
   guestName: string;
   reference: string;
@@ -161,6 +186,7 @@ export async function sendStatusChangeEmail(input: {
   const copy = STATUS_COPY[input.status];
   const pageUrl = `${input.origin || getPublicAppUrl()}${jobPublicPath(input.publicToken)}?src=email`;
   await send({
+    jobId: input.jobId,
     to: input.to,
     subject: copy.subject(input.reference),
     text: [
@@ -185,6 +211,7 @@ export async function sendStatusChangeEmail(input: {
 }
 
 export async function sendReadyEmail(input: {
+  jobId: string;
   to: string;
   guestName: string;
   reference: string;
@@ -193,6 +220,7 @@ export async function sendReadyEmail(input: {
 }) {
   const pageUrl = `${input.origin || getPublicAppUrl()}${jobPublicPath(input.publicToken)}?src=email`;
   await send({
+    jobId: input.jobId,
     to: input.to,
     subject: `Your Victoria Falls flight media is ready (${input.reference})`,
     text: [

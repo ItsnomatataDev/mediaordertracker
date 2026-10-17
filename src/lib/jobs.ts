@@ -7,7 +7,7 @@ import {
   deviceSummary,
   parseDevice,
 } from "@/lib/device";
-import { canSendEmail, sendStatusChangeEmail } from "@/lib/email";
+import { sendStatusChangeEmail } from "@/lib/email";
 import { getAppUrl, getPublicAppUrl } from "@/lib/env";
 import { harareDateBounds, harareDateKey, jobPublicPath } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
@@ -46,7 +46,6 @@ export async function createJob(input: {
   guestEmail?: string;
   guestPhone?: string;
   location: LocationCode;
-  invoiceNumber?: string;
   createdById: string;
 }) {
   if (!LOCATION_CODES.includes(input.location)) {
@@ -56,7 +55,6 @@ export async function createJob(input: {
   const locationPrefix = input.location;
   const dateKey = harareDateKey();
   const publicToken = tokenAlphabet();
-  const invoiceNumber = input.invoiceNumber?.trim() || null;
 
   const job = await prisma.$transaction(async (tx) => {
     const sequence = await tx.dailySequence.upsert({
@@ -75,7 +73,6 @@ export async function createJob(input: {
         guestName: input.guestName,
         guestEmail: input.guestEmail || null,
         guestPhone: input.guestPhone || null,
-        invoiceNumber,
         location: locationPrefix,
         createdById: input.createdById,
       },
@@ -85,9 +82,7 @@ export async function createJob(input: {
       data: {
         jobId: created.id,
         type: "CREATED",
-        message: invoiceNumber
-          ? `Package ${created.reference} created for ${created.guestName} · invoice ${invoiceNumber}`
-          : `Package ${created.reference} created for ${created.guestName}`,
+        message: `Package ${created.reference} created for ${created.guestName}`,
         actorUserId: input.createdById,
       },
     });
@@ -122,7 +117,6 @@ export async function searchJobs(filters: {
         ? {
             OR: [
               { reference: { contains: trimmed, mode: "insensitive" } },
-              { invoiceNumber: { contains: trimmed, mode: "insensitive" } },
               { guestName: { contains: trimmed, mode: "insensitive" } },
               { guestEmail: { contains: trimmed, mode: "insensitive" } },
               { guestPhone: { contains: trimmed, mode: "insensitive" } },
@@ -326,7 +320,7 @@ export async function setJobStatus(input: {
   actorUserId: string;
 }) {
   if (input.status === "READY" || input.status === "DONE") {
-    throw new Error("Mark the package ready with a download link and invoice number instead.");
+    throw new Error("Mark the package ready with a download link instead.");
   }
   const current = await prisma.job.findUnique({
     where: { id: input.jobId },
@@ -359,7 +353,7 @@ async function completeReadyIfPossible(jobId: string, actorUserId: string) {
   if (job.status === "DONE" || job.status === "READY") {
     return { job, becameReady: false };
   }
-  if (!job.invoiceNumber || !job.weTransferUrl) {
+  if (!job.weTransferUrl) {
     return { job, becameReady: false };
   }
 
@@ -370,43 +364,10 @@ async function completeReadyIfPossible(jobId: string, actorUserId: string) {
   await logEvent({
     jobId,
     type: "MARKED_READY",
-    message: `Package marked ready · invoice ${updated.invoiceNumber}`,
+    message: "Package marked ready",
     actorUserId,
   });
   return { job: updated, becameReady: true };
-}
-
-export async function saveJobInvoice(input: {
-  jobId: string;
-  invoiceNumber: string;
-  actorUserId: string;
-}) {
-  const existing = await prisma.job.findUnique({
-    where: { id: input.jobId },
-    select: { status: true, invoiceNumber: true },
-  });
-  if (!existing) throw new Error("Package not found");
-  if (existing.status === "DONE") {
-    throw new Error("This package is already done.");
-  }
-  const invoiceNumber = input.invoiceNumber.trim();
-  if (!invoiceNumber) {
-    throw new Error("Add the invoice / receipt number.");
-  }
-
-  await prisma.job.update({
-    where: { id: input.jobId },
-    data: { invoiceNumber },
-  });
-  if (existing.invoiceNumber !== invoiceNumber) {
-    await logEvent({
-      jobId: input.jobId,
-      type: "DETAILS_UPDATED",
-      message: `Invoice set to ${invoiceNumber}`,
-      actorUserId: input.actorUserId,
-    });
-  }
-  return completeReadyIfPossible(input.jobId, input.actorUserId);
 }
 
 export async function saveJobLink(input: {
@@ -441,12 +402,11 @@ export async function saveJobLink(input: {
 export async function markJobReady(input: {
   jobId: string;
   weTransferUrl: string;
-  invoiceNumber: string;
   actorUserId: string;
 }) {
   const existing = await prisma.job.findUnique({
     where: { id: input.jobId },
-    select: { status: true, invoiceNumber: true, weTransferUrl: true },
+    select: { status: true, weTransferUrl: true },
   });
   if (!existing) {
     throw new Error("Package not found");
@@ -454,16 +414,11 @@ export async function markJobReady(input: {
   if (existing.status === "DONE") {
     throw new Error("This package is already done.");
   }
-  const invoiceNumber = input.invoiceNumber.trim();
-  if (!invoiceNumber) {
-    throw new Error("Add the invoice / receipt number before marking ready.");
-  }
 
   const job = await prisma.job.update({
     where: { id: input.jobId },
     data: {
       weTransferUrl: input.weTransferUrl,
-      invoiceNumber,
       status: "READY",
       readyAt: new Date(),
     },
@@ -479,7 +434,7 @@ export async function markJobReady(input: {
   await logEvent({
     jobId: job.id,
     type: "MARKED_READY",
-    message: `Package marked ready · invoice ${invoiceNumber}`,
+    message: "Package marked ready",
     actorUserId: input.actorUserId,
   });
   return job;
@@ -488,10 +443,10 @@ export async function markJobReady(input: {
 export async function markJobDoneIfReady(jobId: string, reason: string) {
   const job = await prisma.job.findUnique({
     where: { id: jobId },
-    select: { status: true, detailsConfirmedAt: true, weTransferUrl: true, invoiceNumber: true },
+    select: { status: true, detailsConfirmedAt: true, weTransferUrl: true },
   });
   if (!job || job.status !== "READY") return null;
-  if (!job.weTransferUrl || !job.invoiceNumber) return null;
+  if (!job.weTransferUrl) return null;
   if (!job.detailsConfirmedAt) return null;
 
   const updated = await prisma.job.updateMany({
@@ -507,9 +462,10 @@ export async function markJobDoneIfReady(jobId: string, reason: string) {
   });
 
   const completed = await prisma.job.findUnique({ where: { id: jobId } });
-  if (completed?.guestEmail && canSendEmail()) {
+  if (completed?.guestEmail) {
     try {
       await sendStatusChangeEmail({
+        jobId,
         to: completed.guestEmail,
         guestName: completed.guestName,
         reference: completed.reference,
@@ -517,26 +473,12 @@ export async function markJobDoneIfReady(jobId: string, reason: string) {
         status: "DONE",
         origin: getPublicAppUrl(),
       });
-      await recordEmailSent(jobId, null, completed.guestEmail);
     } catch (error) {
       console.error("Failed to send done-status email", error);
     }
   }
 
   return true;
-}
-
-export async function recordEmailSent(jobId: string, actorUserId: string | null, to: string) {
-  await prisma.job.update({
-    where: { id: jobId },
-    data: { notifiedAt: new Date() },
-  });
-  await logEvent({
-    jobId,
-    type: "EMAIL_SENT",
-    message: `Status email sent to ${to}`,
-    actorUserId: actorUserId || undefined,
-  });
 }
 
 export async function recordDownloadClick(input: {

@@ -3,7 +3,6 @@
 import { useActionState } from "react";
 import {
   notifyGuestAction,
-  saveInvoiceAction,
   saveLinkAction,
   updateStatusAction,
   type JobFormState,
@@ -16,7 +15,6 @@ export function ProductionControls({
   jobId,
   status,
   weTransferUrl,
-  invoiceNumber,
   guestEmail,
   guestPhone,
   whatsappHref,
@@ -25,20 +23,17 @@ export function ProductionControls({
   jobId: string;
   status: JobStatus;
   weTransferUrl: string | null;
-  invoiceNumber: string | null;
   guestEmail: string | null;
   guestPhone: string | null;
   whatsappHref: string | null;
   notifiedAt: string | null;
 }) {
-  const boundInvoice = saveInvoiceAction.bind(null, jobId);
   const boundLink = saveLinkAction.bind(null, jobId);
   const boundNotify = notifyGuestAction.bind(null, jobId);
-  const [invoiceState, invoiceAction, invoicePending] = useActionState(boundInvoice, initial);
   const [linkState, linkAction, linkPending] = useActionState(boundLink, initial);
   const [notifyState, notifyAction, notifyPending] = useActionState(boundNotify, initial);
   const locked = status === "READY" || status === "DONE";
-  const canReady = Boolean(invoiceNumber && weTransferUrl);
+  const canReady = Boolean(weTransferUrl);
 
   return (
     <div className="space-y-6">
@@ -61,8 +56,7 @@ export function ProductionControls({
         </div>
         {status === "READY" ? (
           <p className="mt-2 text-sm text-ready">
-            Ready — waiting for the guest to scan and confirm. They were emailed if we have an
-            address.
+            Ready — waiting for the guest to scan and confirm. Check the email log for send status.
           </p>
         ) : null}
         {status === "DONE" ? (
@@ -72,31 +66,13 @@ export function ProductionControls({
         ) : null}
         {status !== "READY" && status !== "DONE" && !canReady ? (
           <p className="mt-2 text-sm text-muted">
-            Save invoice and link separately. Ready is automatic when both are in.
+            Save the download link to mark this package Ready.
           </p>
         ) : null}
       </div>
 
       {status === "DONE" ? null : (
-        <div className="grid gap-4 sm:grid-cols-2">
-          <form action={invoiceAction} className="space-y-3 border border-line p-4">
-            <label className="block">
-              <span className="mb-1.5 block text-sm font-medium">Invoice / receipt number</span>
-              <input
-                name="invoiceNumber"
-                defaultValue={invoiceNumber ?? ""}
-                placeholder="INV-12345"
-                className="field"
-                required
-              />
-            </label>
-            <p className="text-sm text-muted">Save this on its own. The media link can wait.</p>
-            <FormNotice state={invoiceState} />
-            <button type="submit" disabled={invoicePending} className="btn btn-black">
-              {invoicePending ? "Saving…" : "Save invoice"}
-            </button>
-          </form>
-
+        <div className="grid gap-4">
           <form action={linkAction} className="space-y-3 border border-line p-4">
             <label className="block">
               <span className="mb-1.5 block text-sm font-medium">WeTransfer / download link</span>
@@ -108,7 +84,7 @@ export function ProductionControls({
               />
             </label>
             <p className="text-sm text-muted">
-              Paste when upload finishes. If the invoice is already saved, this marks Ready.
+              Paste when upload finishes. Saving the link marks this package Ready.
             </p>
             <FormNotice state={linkState} />
             <button type="submit" disabled={linkPending} className="btn btn-primary">
@@ -120,8 +96,8 @@ export function ProductionControls({
 
       {status === "READY" || status === "DONE" ? (
         <div className="space-y-3 border border-line p-4">
-          <p className="text-sm font-medium">Guest already emailed on status change</p>
-          {notifiedAt ? <p className="text-sm text-muted">Last email logged at {notifiedAt}</p> : null}
+          <p className="text-sm font-medium">Guest email</p>
+          {notifiedAt ? <p className="text-sm text-muted">Last accepted by Resend at {notifiedAt}</p> : null}
           {guestEmail ? (
             <form action={notifyAction}>
               <button type="submit" disabled={notifyPending} className="btn btn-ghost">

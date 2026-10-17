@@ -7,7 +7,6 @@ export function MediaReceipt({
   guestName,
   location,
   createdAt,
-  invoiceNumber,
 }: {
   qr: string;
   reference: string;
@@ -15,7 +14,6 @@ export function MediaReceipt({
   location: string;
   createdAt: Date;
       url?: string;
-      invoiceNumber?: string | null;
     }) {
   return (
     <article className="print-slip mx-auto w-[80mm] max-w-full border border-black bg-white">
@@ -36,9 +34,6 @@ export function MediaReceipt({
         <p className="mt-0.5 text-[10px] leading-tight">
           {formatDate(createdAt)} · {locationLabel(location)}
         </p>
-        {invoiceNumber ? (
-          <p className="mt-0.5 font-mono text-[10px] leading-tight">Inv {invoiceNumber}</p>
-        ) : null}
         <img
           src={qr}
           alt={`QR for ${reference}`}

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { EmailLog } from "@/components/email-log";
 import { ActivityLog } from "@/components/activity-log";
 import { DeletePackage } from "@/components/delete-package";
 import { PackagePhotos } from "@/components/package-photos";
@@ -28,7 +29,6 @@ export default async function PackageDetailPage({ params }: PageProps<"/packages
         <div>
           <p className="font-mono text-sm text-muted">
             {job.reference}
-            {job.invoiceNumber ? ` · Invoice ${job.invoiceNumber}` : ""}
           </p>
           <div className="mt-1 flex flex-wrap items-center gap-3">
             <h1 className="text-3xl font-semibold">{job.guestName}</h1>
@@ -70,10 +70,6 @@ export default async function PackageDetailPage({ params }: PageProps<"/packages
             <h2 className="text-lg font-semibold">Guest</h2>
             <dl className="mt-4 grid gap-4 sm:grid-cols-2 text-sm">
               <div>
-                <dt className="text-muted">Invoice / receipt</dt>
-                <dd className="mt-1 font-mono font-medium">{job.invoiceNumber || "—"}</dd>
-              </div>
-              <div>
                 <dt className="text-muted">WhatsApp</dt>
                 <dd className="mt-1 font-medium">{job.guestPhone || "—"}</dd>
               </div>
@@ -112,15 +108,13 @@ export default async function PackageDetailPage({ params }: PageProps<"/packages
           <section className="border border-line bg-white p-5">
             <h2 className="text-lg font-semibold">Delivery</h2>
             <p className="mt-1 text-sm text-muted">
-            Save invoice and WeTransfer separately. Ready (blue) happens when both are in — the guest
-            is emailed automatically. After they scan and confirm, it turns Done (green).
+            Save the download link to mark Ready (blue) and automatically email the guest. After they scan and confirm, it turns Done (green).
             </p>
             <div className="mt-4">
               <ProductionControls
                 jobId={job.id}
                 status={job.status}
                 weTransferUrl={job.weTransferUrl}
-                invoiceNumber={job.invoiceNumber}
                 guestEmail={job.guestEmail}
                 guestPhone={job.guestPhone}
                 whatsappHref={guestWhatsapp}
@@ -130,7 +124,10 @@ export default async function PackageDetailPage({ params }: PageProps<"/packages
           </section>
         </div>
 
-        <ActivityLog events={job.events} />
+        <div className="space-y-6">
+          <EmailLog jobId={job.id} events={job.events} />
+          <ActivityLog events={job.events} />
+        </div>
       </div>
       {isAdmin(session.user.role) ? (
         <DeletePackage jobId={job.id} reference={job.reference} guestName={job.guestName} />

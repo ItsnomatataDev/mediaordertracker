@@ -28,7 +28,6 @@ export function CreateJobForm() {
   const [selectedLocation, setLocation] = useState<LocationCode | null>(null);
   const location = selectedLocation ?? remembered;
   const [name, setName] = useState("");
-  const [invoice, setInvoice] = useState("");
   const [changed, setChanged] = useState(false);
   const duplicates = changed ? undefined : state.duplicates;
 
@@ -51,7 +50,7 @@ export function CreateJobForm() {
             try {
               window.localStorage.setItem(LAST_LOCATION_KEY, next);
             } catch {
-              /* Storage is optional. */
+
             }
           }}
           className="field"
@@ -77,20 +76,6 @@ export function CreateJobForm() {
       </label>
       <PhoneField rememberCountry />
       <EmailField />
-      <EmailField />
-      <label className="block">
-        <span className="mb-1.5 block text-sm font-medium">
-          Invoice / receipt number
-        </span>
-        <input
-          name="invoiceNumber"
-          value={invoice}
-          onChange={(event) => setInvoice(event.target.value)}
-          autoComplete="off"
-          placeholder="Optional — save later from the package"
-          className="field"
-        />
-      </label>
       <p className="text-sm text-muted">
         Name and WhatsApp is enough. Print the receipt from the packages list
         when the printer is free. The guest is emailed when status changes.

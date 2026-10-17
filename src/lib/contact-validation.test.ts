@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { checkPhone, phoneFromFormData, splitPhone } from "./phone";
 import { contactEmailSchema, emailSuggestion } from "./contact-email";
-import { createJobSchema, guestDetailsSchema } from "./validation";
+import { createJobSchema, guestDetailsSchema, markReadySchema } from "./validation";
 
 test("normalizes local and international numbers without losing significant zeros", () => {
   for (const number of ["078 120 2592", "781202592", "+263 78 120 2592", "00263781202592", "263781202592"]) {
@@ -22,7 +22,7 @@ test("rejects invalid numbers and country mismatches", () => {
 });
 
 test("both server schemas reject invalid phone input even with a valid email", () => {
-  const details = { guestName: "Test Guest", guestEmail: "guest@example.com", guestPhone: "", location: "ZHC", invoiceNumber: "" };
+  const details = { guestName: "Test Guest", guestEmail: "guest@example.com", guestPhone: "", location: "ZHC" };
   for (const schema of [guestDetailsSchema, createJobSchema]) {
     assert.ok(schema.safeParse(details).success);
     for (const input of ["abc", "123", "+27821234567"]) {
@@ -44,4 +44,11 @@ test("email validation trims spaces and suggestions do not silently rewrite addr
   assert.equal(contactEmailSchema.parse("guest@gmail.con"), "guest@gmail.con");
   assert.equal(emailSuggestion("guest@company.co.zw"), null);
   assert.equal(emailSuggestion(""), null);
+});
+
+
+test("a package can be marked ready with only a secure download link", () => {
+  assert.ok(markReadySchema.safeParse({ weTransferUrl: "https://example.com/media" }).success);
+  assert.equal(markReadySchema.safeParse({ weTransferUrl: "" }).success, false);
+  assert.equal(markReadySchema.safeParse({ weTransferUrl: "http://example.com/media" }).success, false);
 });

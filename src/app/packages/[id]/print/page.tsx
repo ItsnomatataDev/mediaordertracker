@@ -42,7 +42,6 @@ export default async function PrintReceiptPage({
         guestName={job.guestName}
         location={job.location}
         createdAt={job.createdAt}
-        invoiceNumber={job.invoiceNumber}
       />
     </div>
   );

@@ -9,20 +9,19 @@ import {
   sendJobCreatedEmail,
   sendReadyEmail,
   sendStatusChangeEmail,
-  canSendEmail,
 } from "@/lib/email";
-import { getPublicAppUrl } from "@/lib/env";
+import { Resend } from "resend";
+import { prisma } from "@/lib/prisma";
+import { getPublicAppUrl, mailConfig } from "@/lib/env";
 import {
   createJob,
   getJobById,
   markJobReady,
-  recordEmailSent,
-  saveJobInvoice,
   saveJobLink,
   setJobStatus,
 } from "@/lib/jobs";
 import { phoneFromFormData } from "@/lib/phone";
-import { createJobSchema, markReadySchema, saveInvoiceSchema, saveLinkSchema } from "@/lib/validation";
+import { createJobSchema, markReadySchema, saveLinkSchema } from "@/lib/validation";
 import { getSession, isApproved } from "@/lib/session";
 
 async function staffUser() {
@@ -55,15 +54,9 @@ type MailJob = {
   status: JobStatus;
 };
 
-async function emailGuestStatus(job: MailJob, actorUserId: string): Promise<JobFormState> {
+async function emailGuestStatus(job: MailJob): Promise<JobFormState> {
   if (!job.guestEmail) {
     return { success: "Saved. No guest email on this package, so nothing was sent." };
-  }
-  if (!canSendEmail()) {
-    return {
-      warning:
-        "Saved. Resend is not configured, so no email was sent. Use WhatsApp or add RESEND_API_KEY.",
-    };
   }
   if (job.status === "NEW") {
     return { success: "Saved." };
@@ -73,6 +66,7 @@ async function emailGuestStatus(job: MailJob, actorUserId: string): Promise<JobF
     const origin = getPublicAppUrl(await headers());
     if (job.status === "READY") {
       await sendReadyEmail({
+      jobId: job.id,
         to: job.guestEmail,
         guestName: job.guestName,
         reference: job.reference,
@@ -81,6 +75,7 @@ async function emailGuestStatus(job: MailJob, actorUserId: string): Promise<JobF
       });
     } else if (job.status === "EDITING" || job.status === "UPLOADING" || job.status === "DONE") {
       await sendStatusChangeEmail({
+        jobId: job.id,
         to: job.guestEmail,
         guestName: job.guestName,
         reference: job.reference,
@@ -91,9 +86,10 @@ async function emailGuestStatus(job: MailJob, actorUserId: string): Promise<JobF
     } else {
       return { success: "Saved." };
     }
-    await recordEmailSent(job.id, actorUserId, job.guestEmail);
-    return { success: `Saved. Email sent to ${job.guestEmail}.` };
+    revalidatePath(`/packages/${job.id}`);
+    return { success: `Saved. Email accepted by Resend for ${job.guestEmail}.` };
   } catch (error) {
+    revalidatePath(`/packages/${job.id}`);
     return {
       warning:
         error instanceof Error
@@ -113,7 +109,6 @@ export async function createJobAction(
     guestEmail: String(formData.get("guestEmail") || "").trim(),
     guestPhone: phoneFromFormData(formData),
     location: String(formData.get("location") || ""),
-    invoiceNumber: String(formData.get("invoiceNumber") || "").trim(),
   });
 
   if (!parsed.success) {
@@ -130,16 +125,16 @@ export async function createJobAction(
     createdById: user.id,
   });
 
-  if (job.guestEmail && canSendEmail()) {
+  if (job.guestEmail) {
     try {
       await sendJobCreatedEmail({
+        jobId: job.id,
         to: job.guestEmail,
         guestName: job.guestName,
         reference: job.reference,
         publicToken: job.publicToken,
         origin: getPublicAppUrl(await headers()),
       });
-      await recordEmailSent(job.id, user.id, job.guestEmail);
     } catch (error) {
       console.error("Failed to send collection-page email", error);
     }
@@ -154,44 +149,8 @@ export async function updateStatusAction(jobId: string, status: JobStatus) {
   revalidatePath(`/packages/${jobId}`);
   revalidatePath("/packages");
   if (changed) {
-    await emailGuestStatus(job, user.id);
+    await emailGuestStatus(job);
   }
-}
-
-export async function saveInvoiceAction(
-  jobId: string,
-  _prev: JobFormState,
-  formData: FormData,
-): Promise<JobFormState> {
-  const user = await staffUser();
-  const parsed = saveInvoiceSchema.safeParse({
-    invoiceNumber: String(formData.get("invoiceNumber") || "").trim(),
-  });
-  if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message || "Add the invoice number" };
-  }
-
-  let result;
-  try {
-    result = await saveJobInvoice({
-      jobId,
-      invoiceNumber: parsed.data.invoiceNumber,
-      actorUserId: user.id,
-    });
-  } catch (error) {
-    return { error: error instanceof Error ? error.message : "Could not save invoice" };
-  }
-
-  revalidatePath(`/packages/${jobId}`);
-  revalidatePath("/packages");
-
-  if (result.becameReady) {
-    return emailGuestStatus(result.job, user.id);
-  }
-  if (result.job.weTransferUrl) {
-    return { success: "Invoice saved." };
-  }
-  return { success: "Invoice saved. Paste the media link when it is ready." };
 }
 
 export async function saveLinkAction(
@@ -222,12 +181,9 @@ export async function saveLinkAction(
   revalidatePath("/packages");
 
   if (result.becameReady) {
-    return emailGuestStatus(result.job, user.id);
+    return emailGuestStatus(result.job);
   }
-  if (result.job.invoiceNumber) {
-    return { success: "Link saved." };
-  }
-  return { success: "Link saved. Add the invoice number to mark ready." };
+  return { success: "Link saved." };
 }
 
 export async function markReadyAction(
@@ -238,10 +194,9 @@ export async function markReadyAction(
   const user = await staffUser();
   const parsed = markReadySchema.safeParse({
     weTransferUrl: String(formData.get("weTransferUrl") || ""),
-    invoiceNumber: String(formData.get("invoiceNumber") || "").trim(),
   });
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message || "Paste a valid link and invoice number" };
+    return { error: parsed.error.issues[0]?.message || "Paste a valid link" };
   }
 
   let job;
@@ -249,7 +204,6 @@ export async function markReadyAction(
     job = await markJobReady({
       jobId,
       weTransferUrl: parsed.data.weTransferUrl,
-      invoiceNumber: parsed.data.invoiceNumber,
       actorUserId: user.id,
     });
   } catch (error) {
@@ -257,7 +211,7 @@ export async function markReadyAction(
   }
   revalidatePath(`/packages/${jobId}`);
   revalidatePath("/packages");
-  return emailGuestStatus(job, user.id);
+  return emailGuestStatus(job);
 }
 
 export async function notifyGuestAction(
@@ -265,28 +219,46 @@ export async function notifyGuestAction(
   _prev?: JobFormState,
   _formData?: FormData,
 ): Promise<JobFormState> {
-  const user = await staffUser();
+  await staffUser();
   const job = await getJobById(jobId);
   if (!job) return { error: "Package not found" };
   if (job.status !== "READY" && job.status !== "DONE") return { error: "Mark the package ready first" };
   if (!job.guestEmail) return { error: "Guest has no email on this package" };
-  if (!canSendEmail()) {
-    return { error: "Resend is not configured. Share the page link on WhatsApp instead." };
-  }
 
   try {
     await sendReadyEmail({
+      jobId: job.id,
       to: job.guestEmail,
       guestName: job.guestName,
       reference: job.reference,
       publicToken: job.publicToken,
       origin: getPublicAppUrl(await headers()),
     });
-    await recordEmailSent(job.id, user.id, job.guestEmail);
   } catch (error) {
+    revalidatePath(`/packages/${jobId}`);
     return { error: error instanceof Error ? error.message : "Email failed" };
   }
 
   revalidatePath(`/packages/${jobId}`);
-  return { success: `Email sent to ${job.guestEmail}` };
+  return { success: `Email accepted by Resend for ${job.guestEmail}` };
+}
+
+export async function refreshEmailStatusAction(jobId: string, eventId: string) {
+  await staffUser();
+  const event = await prisma.jobEvent.findFirst({ where: { id: eventId, jobId } });
+  const meta = event?.metadata;
+  if (!meta || typeof meta !== "object" || Array.isArray(meta) || meta.provider !== "resend" || typeof meta.messageId !== "string") return;
+  let update;
+  try {
+    const mail = mailConfig();
+    if (!mail) throw new Error("Resend is not configured.");
+    const { data, error } = await new Resend(mail.apiKey).emails.get(meta.messageId);
+    if (error) throw new Error(error.message);
+    if (!data) throw new Error("Resend returned no status.");
+    update = { ...meta, status: data.last_event, checkedAt: new Date().toISOString(), checkError: null };
+  } catch (error) {
+    update = { ...meta, checkError: error instanceof Error ? error.message : "Could not check Resend status" };
+  }
+  await prisma.jobEvent.update({ where: { id: eventId }, data: { metadata: update } });
+  revalidatePath(`/packages/${jobId}`);
 }

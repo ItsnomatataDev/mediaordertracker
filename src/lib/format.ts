@@ -65,10 +65,9 @@ export type GuestViewStatus = "HELD" | "READY" | "DONE";
 export function guestViewStatus(job: {
   status: JobStatus;
   weTransferUrl?: string | null;
-  invoiceNumber?: string | null;
 }): GuestViewStatus {
   if (job.status === "DONE") return "DONE";
-  if (job.status === "READY" || (job.weTransferUrl && job.invoiceNumber)) return "READY";
+  if (job.status === "READY" || job.weTransferUrl) return "READY";
   return "HELD";
 }
 

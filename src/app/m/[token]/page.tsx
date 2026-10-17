@@ -75,9 +75,6 @@ export default async function CustomerPage({
               : "We've opened your personal media package and the desk has you on file. Photos and video are being finished now. They appear on this same page, usually within 24 hours — bookmark it so you do not lose it."}
         </p>
         <p className="mt-3 font-mono text-sm">Package: {current.reference}</p>
-        {current.invoiceNumber ? (
-          <p className="mt-1 font-mono text-sm text-muted">Invoice {current.invoiceNumber}</p>
-        ) : null}
         <p className="mt-1 text-sm text-muted">{formatDate(current.createdAt)}</p>
         {query.confirmed === "1" ? (
           <p className="notice mt-4">

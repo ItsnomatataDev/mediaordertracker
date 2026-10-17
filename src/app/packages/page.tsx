@@ -67,7 +67,7 @@ export default async function PackagesPage({ searchParams }: PageProps<"/package
             <input
               name="q"
               defaultValue={q}
-              placeholder="Invoice, name, phone, email, package"
+              placeholder="Name, phone, email, package"
               className="field w-64"
             />
           </label>
@@ -87,7 +87,6 @@ export default async function PackagesPage({ searchParams }: PageProps<"/package
           <colgroup>
             <col className="w-[11%]" />
             <col className="w-[12%]" />
-            <col className="w-[10%]" />
             <col className="w-[13%]" />
             <col className="w-[15%]" />
             <col className="w-[9%]" />
@@ -98,7 +97,6 @@ export default async function PackagesPage({ searchParams }: PageProps<"/package
           <thead className="border-b border-line text-xs font-medium text-muted">
             <tr>
               <th className="px-4 py-4 xl:px-6">Package</th>
-              <th className="px-4 py-4 xl:px-6">Invoice</th>
               <th className="px-4 py-4 xl:px-6">Date</th>
               <th className="px-4 py-4 xl:px-6">Location</th>
               <th className="px-4 py-4 xl:px-6">Guest</th>
@@ -117,9 +115,6 @@ export default async function PackagesPage({ searchParams }: PageProps<"/package
                   className={`border-t border-line ${overdue ? "bg-orange-soft" : ""}`}
                 >
                   <td className="truncate px-4 py-4 font-mono text-sm xl:px-6">{job.reference}</td>
-                  <td className="truncate px-4 py-4 font-mono text-sm xl:px-6">
-                    {job.invoiceNumber || "—"}
-                  </td>
                   <td className="px-4 py-4 xl:px-6">
                     <p>{formatDate(job.createdAt)}</p>
                     <p className="text-xs text-muted">{formatTime(job.createdAt)}</p>
@@ -162,9 +157,6 @@ export default async function PackagesPage({ searchParams }: PageProps<"/package
                 <StatusBadge status={job.status} />
               </div>
               <p className="mt-2 text-base font-medium">{job.guestName}</p>
-              <p className="mt-1 text-sm text-muted">
-                Invoice {job.invoiceNumber || "—"}
-              </p>
               <p className="mt-1 text-sm text-muted">
                 {formatDate(job.createdAt)} · {locationLabel(job.location)} · {formatAge(job.createdAt)}{" "}
                 · QR {job.qrScanCount} · Portal {job.portalClickCount}
