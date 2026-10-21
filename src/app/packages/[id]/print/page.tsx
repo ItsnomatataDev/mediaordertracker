@@ -10,9 +10,9 @@ import { requireStaff } from "@/lib/session";
 export default async function PrintReceiptPage({
   params,
 }: PageProps<"/packages/[id]/print">) {
-  await requireStaff();
+  const session = await requireStaff();
   const { id } = await params;
-  const job = await getJobById(id);
+  const job = await getJobById(id, session.user);
   if (!job) notFound();
 
   const url = publicJobUrl(job.publicToken, "print");

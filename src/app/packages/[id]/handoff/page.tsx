@@ -10,9 +10,9 @@ import { requireStaff } from "@/lib/session";
 export default async function HandoffPage({
   params,
 }: PageProps<"/packages/[id]/handoff">) {
-  await requireStaff();
+  const session = await requireStaff();
   const { id } = await params;
-  const job = await getJobById(id);
+  const job = await getJobById(id, session.user);
   if (!job) notFound();
 
   const url = publicJobUrl(job.publicToken, "qr");

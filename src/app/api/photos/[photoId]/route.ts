@@ -1,3 +1,4 @@
+import { canAccessPackage } from "@/lib/package-access";
 import { NextResponse } from "next/server";
 import { getJobPhoto } from "@/lib/jobs";
 import { getSession, isApproved } from "@/lib/session";
@@ -14,7 +15,7 @@ export async function GET(
 
   const token = new URL(request.url).searchParams.get("token");
   const session = await getSession();
-  const staff = Boolean(session?.user && !session.user.banned && isApproved(session));
+  const staff = Boolean(session?.user && !session.user.banned && isApproved(session) && canAccessPackage(session.user, photo.job.createdById));
   const guest = token === photo.job.publicToken;
 
   if (!staff && !guest) {
@@ -24,7 +25,7 @@ export async function GET(
   return new NextResponse(new Uint8Array(photo.data), {
     headers: {
       "Content-Type": photo.mimeType || "image/jpeg",
-      "Cache-Control": "private, max-age=3600",
+      "Cache-Control": "private, no-store",
     },
   });
 }

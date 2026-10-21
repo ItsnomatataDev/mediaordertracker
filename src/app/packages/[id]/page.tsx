@@ -14,7 +14,7 @@ import { isAdmin, requireStaff } from "@/lib/session";
 export default async function PackageDetailPage({ params }: PageProps<"/packages/[id]">) {
   const session = await requireStaff();
   const { id } = await params;
-  const job = await getJobById(id);
+  const job = await getJobById(id, session.user);
   if (!job) notFound();
 
   const overdue = isOverdue(job.createdAt, job.status);

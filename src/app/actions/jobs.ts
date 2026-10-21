@@ -116,7 +116,7 @@ export async function createJobAction(
   }
 
   if (formData.get("allowDuplicate") !== "yes") {
-    const duplicates = await findPackageDuplicates(parsed.data);
+    const duplicates = await findPackageDuplicates(parsed.data, user);
     if (duplicates.length) return { duplicates };
   }
 
@@ -145,6 +145,7 @@ export async function createJobAction(
 
 export async function updateStatusAction(jobId: string, status: JobStatus) {
   const user = await staffUser();
+  if (!await getJobById(jobId, user)) throw new Error("Package not found");
   const { job, changed } = await setJobStatus({ jobId, status, actorUserId: user.id });
   revalidatePath(`/packages/${jobId}`);
   revalidatePath("/packages");
@@ -159,6 +160,7 @@ export async function saveLinkAction(
   formData: FormData,
 ): Promise<JobFormState> {
   const user = await staffUser();
+  if (!await getJobById(jobId, user)) throw new Error("Package not found");
   const parsed = saveLinkSchema.safeParse({
     weTransferUrl: String(formData.get("weTransferUrl") || ""),
   });
@@ -192,6 +194,7 @@ export async function markReadyAction(
   formData: FormData,
 ): Promise<JobFormState> {
   const user = await staffUser();
+  if (!await getJobById(jobId, user)) throw new Error("Package not found");
   const parsed = markReadySchema.safeParse({
     weTransferUrl: String(formData.get("weTransferUrl") || ""),
   });
@@ -219,8 +222,8 @@ export async function notifyGuestAction(
   _prev?: JobFormState,
   _formData?: FormData,
 ): Promise<JobFormState> {
-  await staffUser();
-  const job = await getJobById(jobId);
+  const user = await staffUser();
+  const job = await getJobById(jobId, user);
   if (!job) return { error: "Package not found" };
   if (job.status !== "READY" && job.status !== "DONE") return { error: "Mark the package ready first" };
   if (!job.guestEmail) return { error: "Guest has no email on this package" };
@@ -244,7 +247,8 @@ export async function notifyGuestAction(
 }
 
 export async function refreshEmailStatusAction(jobId: string, eventId: string) {
-  await staffUser();
+  const user = await staffUser();
+  if (!await getJobById(jobId, user)) throw new Error("Package not found");
   const event = await prisma.jobEvent.findFirst({ where: { id: eventId, jobId } });
   const meta = event?.metadata;
   if (!meta || typeof meta !== "object" || Array.isArray(meta) || meta.provider !== "resend" || typeof meta.messageId !== "string") return;

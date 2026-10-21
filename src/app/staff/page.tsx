@@ -1,3 +1,4 @@
+import { EditStaffForm } from "@/components/edit-staff-form";
 import { ApproveStaffForm } from "@/components/approve-staff-form";
 import { CreateStaffForm } from "@/components/create-staff-form";
 import { getMailStatus } from "@/lib/env";
@@ -5,7 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/session";
 
 export default async function StaffPage() {
-  await requireAdmin();
+  const session = await requireAdmin();
   const mail = getMailStatus();
   const users = await prisma.user.findMany({
     orderBy: { createdAt: "asc" },
@@ -30,7 +31,7 @@ export default async function StaffPage() {
           <h1 className="text-2xl font-semibold">Staff accounts</h1>
           <p className="mt-2 text-muted">
             People can create an account. You approve them and choose Staff or Admin. They cannot
-            pick a role themselves. Approved staff can use the whole portal with clients.
+            pick a role themselves. Staff see only packages they created. Admins see all packages and manage accounts.
           </p>
           <p className={`mt-4 notice ${mail.configured ? "" : "notice-error"}`}>{mail.message}</p>
         </div>
@@ -71,9 +72,10 @@ export default async function StaffPage() {
               <p className="text-sm text-muted">{user.email}</p>
               <p className="mt-1 text-xs font-semibold uppercase text-muted">
                 {user.role === "admin" ? "Admin" : "Staff"}
-                {user.banned ? " · disabled" : ""}
+                {user.banned ? " · suspended" : ""}
                 {user.mustChangePassword ? " · must change PIN" : ""}
               </p>
+              <EditStaffForm user={user} currentUserId={session.user.id} />
             </li>
           ))}
         </ul>

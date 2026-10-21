@@ -12,12 +12,12 @@ export async function DELETE(
   }
 
   const { id, photoId } = await context.params;
-  const job = await getJobById(id);
+  const job = await getJobById(id, session.user);
   if (!job) {
     return NextResponse.json({ error: "Package not found" }, { status: 404 });
   }
 
-  const photo = await deleteJobPhoto({ photoId, actorUserId: session.user.id });
+  const photo = await deleteJobPhoto({ photoId, jobId: id, actorUserId: session.user.id });
   if (!photo || photo.jobId !== job.id) {
     return NextResponse.json({ error: "Photo not found" }, { status: 404 });
   }

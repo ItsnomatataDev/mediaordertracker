@@ -1,3 +1,4 @@
+import { packageScope, type PackageUser } from "@/lib/package-access";
 import { JobEventType, JobStatus, Prisma } from "@prisma/client";
 import { customAlphabet } from "nanoid";
 import { LOCATION_CODES, parseJobStatus, type LocationCode } from "@/lib/constants";
@@ -98,7 +99,7 @@ export async function searchJobs(filters: {
   location?: string;
   status?: string;
   date?: string;
-}) {
+}, user: PackageUser) {
   const trimmed = filters.query?.trim();
   const locationFilter =
     filters.location && LOCATION_CODES.includes(filters.location as LocationCode)
@@ -110,6 +111,7 @@ export async function searchJobs(filters: {
 
   return prisma.job.findMany({
     where: {
+      ...packageScope(user),
       ...(locationFilter ? { location: locationFilter } : {}),
       ...(statusFilter ? { status: statusFilter } : {}),
       ...(day ? { createdAt: { gte: day.start, lt: day.end } } : {}),
@@ -133,9 +135,9 @@ export async function searchJobs(filters: {
   });
 }
 
-export async function getJobById(id: string) {
+export async function getJobById(id: string, user: PackageUser) {
   return prisma.job.findUnique({
-    where: { id },
+    where: { id, ...packageScope(user) },
     include: {
       createdBy: { select: { name: true, email: true } },
       photos: {
@@ -204,14 +206,14 @@ export async function getJobPhoto(photoId: string) {
   return prisma.jobPhoto.findUnique({
     where: { id: photoId },
     include: {
-      job: { select: { id: true, publicToken: true } },
+      job: { select: { id: true, publicToken: true, createdById: true } },
     },
   });
 }
 
-export async function deleteJobPhoto(input: { photoId: string; actorUserId: string }) {
+export async function deleteJobPhoto(input: { photoId: string; jobId: string; actorUserId: string }) {
   const photo = await prisma.jobPhoto.findUnique({
-    where: { id: input.photoId },
+    where: { id: input.photoId, jobId: input.jobId },
     select: { id: true, jobId: true },
   });
   if (!photo) return null;
@@ -532,9 +534,9 @@ export function packageAccessStats(events: { type: JobEventType; metadata: Prism
   return { qrScans, portalClicks, otherOpens, downloads };
 }
 
-export async function getHandoffStatus(jobId: string) {
+export async function getHandoffStatus(jobId: string, user: PackageUser) {
   const job = await prisma.job.findUnique({
-    where: { id: jobId },
+    where: { id: jobId, ...packageScope(user) },
     select: {
       lastViewedAt: true,
       detailsConfirmedAt: true,

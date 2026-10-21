@@ -1,3 +1,4 @@
+import { packageScope, type PackageUser } from "@/lib/package-access";
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@prisma/client";
 
@@ -13,7 +14,7 @@ export type DuplicatePackage = {
 export async function findPackageDuplicates(input: {
   guestEmail: string;
   guestPhone: string;
-}): Promise<DuplicatePackage[]> {
+}, user: PackageUser): Promise<DuplicatePackage[]> {
   const email = input.guestEmail.trim();
   const phone = input.guestPhone.trim();
   const conditions: Prisma.JobWhereInput[] = [];
@@ -22,7 +23,7 @@ export async function findPackageDuplicates(input: {
   if (!conditions.length) return [];
   const select = { id: true, reference: true, guestName: true, location: true, createdAt: true } as const;
   const contacts = await prisma.job.findMany({
-    where: { OR: conditions }, select,
+    where: { ...packageScope(user), OR: conditions }, select,
     orderBy: { createdAt: "desc" }, take: 5,
   });
   return contacts.map((job) => ({

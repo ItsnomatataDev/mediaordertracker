@@ -13,7 +13,7 @@ export default async function PackagesPage({ searchParams }: PageProps<"/package
   const location = typeof params.location === "string" ? params.location : "";
   const status = typeof params.status === "string" ? params.status : "";
   const date = typeof params.date === "string" ? params.date : "";
-  const packages = await searchJobs({ query: q, location, status, date });
+  const packages = await searchJobs({ query: q, location, status, date }, session.user);
   const filtered = Boolean(q || location || status || date);
 
   return (
@@ -23,7 +23,7 @@ export default async function PackagesPage({ searchParams }: PageProps<"/package
           <p className="text-sm text-muted">
             {location ? locationLabel(location) : "ZHC · JETBOAT · EleCrew"}
           </p>
-          <h1 className="text-2xl font-semibold">Packages</h1>
+          <h1 className="text-2xl font-semibold">{isAdmin(session.user.role) ? "All packages" : "My packages"}</h1>
           <p className="mt-1 text-sm text-muted">
             Print from this list. Guests are emailed when status changes — you do not have to open
             each package.

@@ -10,29 +10,10 @@ export const getSession = cache(async () => {
   });
   if (!session?.user) return session;
 
-  const user = session.user as typeof session.user & {
-    approved?: boolean;
-    twoFactorEnabled?: boolean;
-  };
-  if (typeof user.approved === "boolean" && typeof user.twoFactorEnabled === "boolean") {
-    return session;
-  }
-
-  const row = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    select: { approved: true, twoFactorEnabled: true },
-  });
-  return {
-    ...session,
-    user: {
-      ...session.user,
-      approved: typeof user.approved === "boolean" ? user.approved : Boolean(row?.approved),
-      twoFactorEnabled:
-        typeof user.twoFactorEnabled === "boolean"
-          ? user.twoFactorEnabled
-          : Boolean(row?.twoFactorEnabled),
-    },
-  };
+  // Read current permissions so role changes and suspensions apply immediately.
+  const user = await prisma.user.findUnique({ where: { id: session.user.id } });
+  if (!user) return null;
+  return { ...session, user: { ...session.user, ...user } };
 });
 
 type SessionUser = {

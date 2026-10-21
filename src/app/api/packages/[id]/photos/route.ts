@@ -12,7 +12,7 @@ export async function POST(
   }
 
   const { id } = await context.params;
-  const job = await getJobById(id);
+  const job = await getJobById(id, session.user);
   if (!job) {
     return NextResponse.json({ error: "Package not found" }, { status: 404 });
   }
